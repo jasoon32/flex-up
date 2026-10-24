@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "Flex Up",
+    "slug": "flex-up",
+    "scheme": "flexup",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F4F4F0",
+    "ios": {
+      "bundleIdentifier": "com.jasoon32.flexup",
+      "buildNumber": "1",
+      "supportsTablet": false,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.jasoon32.flexup",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-sqlite",
+      "expo-font",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false
+        }
+      ],
+      "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Flex Up uses your photos so you can add a gym photo to your workout share card.",
+          "cameraPermission": "Flex Up uses the camera so you can take a gym photo for your workout share card.",
+          "microphonePermission": false
+        }
+      ]
+    ]
+  }
+}
