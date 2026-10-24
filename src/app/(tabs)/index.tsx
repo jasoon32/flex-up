@@ -50,8 +50,7 @@ export default function Home() {
   const daySessions = data?.week.filter((s) => isSameDay(new Date(s.started_at), selectedDate)) ?? [];
   /** Finished workouts that day that aren't one of the scheduled plans (e.g. Push on a rest day). */
   const otherDone = daySessions.filter((x) => x.completed_at && !scheduled.some((p) => p.id === x.plan_id));
-  const activeElsewhere =
-    data?.active && !(isToday && scheduled.some((p) => p.id === data.active!.plan_id));
+  const activeElsewhere = data?.active && !(isToday && scheduled.some((p) => p.id === data.active!.plan_id));
 
   const start = async (plan: PlanWithExercises) => {
     const other = await checkUnfinished(plan.name);
@@ -126,141 +125,142 @@ export default function Home() {
           <Ionicons name="chevron-forward" size={20} color={colors.onInkMuted} />
         </Pressable>
 
-        <View style={{ gap: space.sm }}>
-          <WeekStrip
-            plans={data?.plans ?? []}
-            week={data?.week ?? []}
-            selected={selected}
-            onSelect={setSelected}
-          />
-          {!isToday ? (
-            <Button title={t.home.backToToday} variant="ghost" small onPress={() => setSelected(dow)} />
-          ) : null}
-        </View>
-
-        {activeElsewhere ? (
-          <Card style={{ gap: space.md }}>
-            <View style={styles.between}>
-              <View style={{ flex: 1, gap: 4 }}>
-                <Eyebrow>{t.home.unfinishedWorkout}</Eyebrow>
-                <Text style={s.cardTitle}>{trName(data!.active!.plan_name, 'plan')}</Text>
-              </View>
-              <Badge label={t.badge.inProgress} tone="progress" />
+        {/* Nothing loaded yet (e.g. no signal): show only the error above, not an empty week
+            and a "No plans yet" card that would tempt you to recreate your plans. */}
+        {data ? (
+          <>
+            <View style={{ gap: space.sm }}>
+              <WeekStrip plans={data?.plans ?? []} week={data?.week ?? []} selected={selected} onSelect={setSelected} />
+              {!isToday ? (
+                <Button title={t.home.backToToday} variant="ghost" small onPress={() => setSelected(dow)} />
+              ) : null}
             </View>
-            <View style={styles.row}>
-              <Button
-                title={t.home.discard}
-                variant="secondary"
-                onPress={() => discard(data!.active!)}
-                style={{ flex: 1 }}
-              />
-              <Button
-                title={t.home.resumeWorkout}
-                onPress={() => router.push(`/workout/${data!.active!.id}`)}
-                style={{ flex: 2 }}
-              />
-            </View>
-          </Card>
-        ) : null}
 
-        {otherDone.length > 0 ? (
-          <Card style={{ gap: space.md }}>
-            <Eyebrow>{isToday ? t.home.doneToday : t.home.doneOn(dayName)}</Eyebrow>
-            {otherDone.map((x) => (
-              <View key={x.id} style={[styles.between, { gap: space.md }]}>
-                <View style={{ flex: 1, gap: 4 }}>
-                  <Text style={s.cardTitle}>{trName(x.plan_name, 'plan')}</Text>
-                  <Badge label={t.badge.completed} tone="done" />
-                </View>
-                <Button
-                  title={t.home.viewWorkout}
-                  variant="secondary"
-                  small
-                  onPress={() => router.push(`/workout/${x.id}`)}
-                />
-              </View>
-            ))}
-          </Card>
-        ) : null}
-
-        {scheduled.length === 0 ? (
-          <Card style={{ gap: space.md }}>
-            <Eyebrow>{isToday ? t.home.todaysWorkout : t.home.dayWorkout(dayName)}</Eyebrow>
-            <Text style={s.cardTitle}>{data?.plans.length ? t.home.restDay : t.home.noPlansYet}</Text>
-            <Text style={styles.muted}>
-              {!data?.plans.length ? t.home.noPlansText : isToday ? t.home.restDayText : t.home.restDayOn(dayName)}
-            </Text>
-            <Button
-              title={data?.plans.length ? t.home.browsePlans : t.home.createPlan}
-              variant="secondary"
-              onPress={() => router.push(data?.plans.length ? '/plans' : '/plan/new')}
-            />
-          </Card>
-        ) : (
-          scheduled.map((plan) => {
-            const sessions = daySessions.filter((x) => x.plan_id === plan.id);
-            const done = sessions.find((x) => x.completed_at);
-            const inProgress = sessions.find((x) => !x.completed_at);
-            return (
-              <Card key={plan.id}>
-                <View style={[styles.between, { alignItems: 'flex-start' }]}>
+            {activeElsewhere ? (
+              <Card style={{ gap: space.md }}>
+                <View style={styles.between}>
                   <View style={{ flex: 1, gap: 4 }}>
-                    <Eyebrow>{isToday ? t.home.todaysWorkout : t.home.dayWorkout(dayName)}</Eyebrow>
-                    <Text style={s.cardTitle}>{trName(plan.name, 'plan')}</Text>
-                    {done ? <Badge label={t.badge.completed} tone="done" /> : null}
+                    <Eyebrow>{t.home.unfinishedWorkout}</Eyebrow>
+                    <Text style={s.cardTitle}>{trName(data!.active!.plan_name, 'plan')}</Text>
                   </View>
-                  <Pressable
-                    onPress={() => router.push(`/plan/${plan.id}`)}
-                    accessibilityRole="button"
-                    accessibilityLabel={t.home.editPlan}
-                    style={s.iconButton}
-                  >
-                    <Ionicons name="pencil-outline" size={18} color={colors.ink} />
-                  </Pressable>
+                  <Badge label={t.badge.inProgress} tone="progress" />
                 </View>
-
-                {plan.exercises.length === 0 ? (
-                  <Text style={styles.muted}>{t.home.noExercisesInPlan}</Text>
-                ) : (
-                  <View>
-                    {plan.exercises.map((ex, i) => (
-                      <View key={ex.id} style={[s.exRow, i < plan.exercises.length - 1 && s.exDivider]}>
-                        <Text style={[styles.textMedium, { flex: 1 }]}>{trName(ex.name)}</Text>
-                        <Text style={[styles.text, { color: colors.muted }]}>{formatTarget(ex)}</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-
-                {plan.exercises.length === 0 ? (
-                  <Button title={t.home.addExercises} onPress={() => router.push(`/plan/${plan.id}`)} />
-                ) : done ? (
+                <View style={styles.row}>
                   <Button
-                    title={t.home.viewWorkout}
+                    title={t.home.discard}
                     variant="secondary"
-                    onPress={() => router.push(`/workout/${done.id}`)}
+                    onPress={() => discard(data!.active!)}
+                    style={{ flex: 1 }}
                   />
-                ) : inProgress ? (
-                  <Button title={t.home.resumeWorkout} onPress={() => router.push(`/workout/${inProgress.id}`)} />
-                ) : !isToday ? (
-                  <View style={s.locked}>
-                    <Ionicons name="lock-closed-outline" size={16} color={colors.muted} />
-                    <Text style={[styles.small, { flex: 1 }]}>
-                      {isPast ? t.home.dayPassed : t.home.startsOn(dayName)}
-                    </Text>
-                  </View>
-                ) : (
                   <Button
-                    title={t.home.startWorkout}
-                    icon={<Ionicons name="play" size={18} color={colors.lime} />}
-                    onPress={() => start(plan)}
-                    loading={starting === plan.id}
+                    title={t.home.resumeWorkout}
+                    onPress={() => router.push(`/workout/${data!.active!.id}`)}
+                    style={{ flex: 2 }}
                   />
-                )}
+                </View>
               </Card>
-            );
-          })
-        )}
+            ) : null}
+
+            {otherDone.length > 0 ? (
+              <Card style={{ gap: space.md }}>
+                <Eyebrow>{isToday ? t.home.doneToday : t.home.doneOn(dayName)}</Eyebrow>
+                {otherDone.map((x) => (
+                  <View key={x.id} style={[styles.between, { gap: space.md }]}>
+                    <View style={{ flex: 1, gap: 4 }}>
+                      <Text style={s.cardTitle}>{trName(x.plan_name, 'plan')}</Text>
+                      <Badge label={t.badge.completed} tone="done" />
+                    </View>
+                    <Button
+                      title={t.home.viewWorkout}
+                      variant="secondary"
+                      small
+                      onPress={() => router.push(`/workout/${x.id}`)}
+                    />
+                  </View>
+                ))}
+              </Card>
+            ) : null}
+
+            {scheduled.length === 0 ? (
+              <Card style={{ gap: space.md }}>
+                <Eyebrow>{isToday ? t.home.todaysWorkout : t.home.dayWorkout(dayName)}</Eyebrow>
+                <Text style={s.cardTitle}>{data?.plans.length ? t.home.restDay : t.home.noPlansYet}</Text>
+                <Text style={styles.muted}>
+                  {!data?.plans.length ? t.home.noPlansText : isToday ? t.home.restDayText : t.home.restDayOn(dayName)}
+                </Text>
+                <Button
+                  title={data?.plans.length ? t.home.browsePlans : t.home.createPlan}
+                  variant="secondary"
+                  onPress={() => router.push(data?.plans.length ? '/plans' : '/plan/new')}
+                />
+              </Card>
+            ) : (
+              scheduled.map((plan) => {
+                const sessions = daySessions.filter((x) => x.plan_id === plan.id);
+                const done = sessions.find((x) => x.completed_at);
+                const inProgress = sessions.find((x) => !x.completed_at);
+                return (
+                  <Card key={plan.id}>
+                    <View style={[styles.between, { alignItems: 'flex-start' }]}>
+                      <View style={{ flex: 1, gap: 4 }}>
+                        <Eyebrow>{isToday ? t.home.todaysWorkout : t.home.dayWorkout(dayName)}</Eyebrow>
+                        <Text style={s.cardTitle}>{trName(plan.name, 'plan')}</Text>
+                        {done ? <Badge label={t.badge.completed} tone="done" /> : null}
+                      </View>
+                      <Pressable
+                        onPress={() => router.push(`/plan/${plan.id}`)}
+                        accessibilityRole="button"
+                        accessibilityLabel={t.home.editPlan}
+                        style={s.iconButton}
+                      >
+                        <Ionicons name="pencil-outline" size={18} color={colors.ink} />
+                      </Pressable>
+                    </View>
+
+                    {plan.exercises.length === 0 ? (
+                      <Text style={styles.muted}>{t.home.noExercisesInPlan}</Text>
+                    ) : (
+                      <View>
+                        {plan.exercises.map((ex, i) => (
+                          <View key={ex.id} style={[s.exRow, i < plan.exercises.length - 1 && s.exDivider]}>
+                            <Text style={[styles.textMedium, { flex: 1 }]}>{trName(ex.name)}</Text>
+                            <Text style={[styles.text, { color: colors.muted }]}>{formatTarget(ex)}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                    {plan.exercises.length === 0 ? (
+                      <Button title={t.home.addExercises} onPress={() => router.push(`/plan/${plan.id}`)} />
+                    ) : done ? (
+                      <Button
+                        title={t.home.viewWorkout}
+                        variant="secondary"
+                        onPress={() => router.push(`/workout/${done.id}`)}
+                      />
+                    ) : inProgress ? (
+                      <Button title={t.home.resumeWorkout} onPress={() => router.push(`/workout/${inProgress.id}`)} />
+                    ) : !isToday ? (
+                      <View style={s.locked}>
+                        <Ionicons name="lock-closed-outline" size={16} color={colors.muted} />
+                        <Text style={[styles.small, { flex: 1 }]}>
+                          {isPast ? t.home.dayPassed : t.home.startsOn(dayName)}
+                        </Text>
+                      </View>
+                    ) : (
+                      <Button
+                        title={t.home.startWorkout}
+                        icon={<Ionicons name="play" size={18} color={colors.lime} />}
+                        onPress={() => start(plan)}
+                        loading={starting === plan.id}
+                      />
+                    )}
+                  </Card>
+                );
+              })
+            )}
+          </>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );

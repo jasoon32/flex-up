@@ -39,16 +39,19 @@ export default function History() {
           <View style={{ gap: 14 }}>
             <Text style={styles.title}>{t.history.title}</Text>
             {error ? <ErrorBanner message={error} onRetry={reload} /> : null}
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <View style={[s.stat, s.statDark]}>
-                <Text style={[s.statLabel, { color: colors.onInkMuted }]}>{t.history.thisWeek}</Text>
-                <Text style={[s.statValue, { color: colors.onInk }]}>{t.history.nWorkouts(data?.thisWeek ?? 0)}</Text>
+            {/* Without loaded counts (e.g. no signal) the tiles would claim "0 workouts". */}
+            {data ? (
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <View style={[s.stat, s.statDark]}>
+                  <Text style={[s.statLabel, { color: colors.onInkMuted }]}>{t.history.thisWeek}</Text>
+                  <Text style={[s.statValue, { color: colors.onInk }]}>{t.history.nWorkouts(data.thisWeek)}</Text>
+                </View>
+                <View style={s.stat}>
+                  <Text style={s.statLabel}>{t.history.total}</Text>
+                  <Text style={s.statValue}>{t.history.nWorkouts(data.total)}</Text>
+                </View>
               </View>
-              <View style={s.stat}>
-                <Text style={s.statLabel}>{t.history.total}</Text>
-                <Text style={s.statValue}>{t.history.nWorkouts(data?.total ?? 0)}</Text>
-              </View>
-            </View>
+            ) : null}
           </View>
         }
         ListEmptyComponent={

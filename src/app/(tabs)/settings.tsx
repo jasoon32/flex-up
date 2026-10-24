@@ -23,7 +23,8 @@ export default function Settings() {
         text: t.settings.signOut,
         style: 'destructive',
         onPress: async () => {
-          const { error } = await supabase.auth.signOut();
+          // Only this device: Supabase's default ('global') also signed out every other phone and browser.
+          const { error } = await supabase.auth.signOut({ scope: 'local' });
           if (error) Alert.alert(t.settings.signOutFailed, errorMessage(error));
         },
       },
