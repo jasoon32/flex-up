@@ -16,15 +16,19 @@
     <meta name="apple-mobile-web-app-title" content="Flex Up" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <!-- ?v= changes whenever the icon does, so iPhones don't reuse a cached old icon. -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=3" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=3" />
-    <link rel="manifest" href="/manifest.json?v=3" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=4" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=4" />
+    <link rel="manifest" href="/manifest.json?v=4" />
     <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
     <style id="expo-reset">
       /* These styles make the body full-height */
+      /* --app-height is the height actually visible (set by the script below). Opened from the
+         iPhone home screen, "100%" can come out taller than the screen and push the tab bar
+         off the bottom. */
       html,
       body {
         height: 100%;
+        height: var(--app-height, 100%);
         background-color: #F4F4F0;
       }
       /* These styles disable body scrolling if you are using <ScrollView> */
@@ -39,6 +43,19 @@
         flex: 1;
       }
     </style>
+    <script>
+      // Size the app to the visible area, and keep it right on rotation or when the toolbar moves.
+      (function () {
+        function fit() {
+          var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+          document.documentElement.style.setProperty('--app-height', Math.round(h) + 'px');
+        }
+        fit();
+        window.addEventListener('resize', fit);
+        window.addEventListener('orientationchange', fit);
+        if (window.visualViewport) window.visualViewport.addEventListener('resize', fit);
+      })();
+    </script>
   </head>
 
   <body>
