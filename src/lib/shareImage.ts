@@ -27,7 +27,27 @@ function base64ToBytes(b64: string): Uint8Array {
 }
 
 async function capturePng(ref: CardRef, size?: { width: number; height: number }): Promise<string> {
+  if (Platform.OS === 'web') return captureWebPng(ref.current as unknown as HTMLElement, size);
   const uri = await captureRef(ref, { format: 'png', quality: 1, result: 'data-uri', ...size });
+  return uri.slice(uri.indexOf(',') + 1);
+}
+
+/**
+ * Web capture with a see-through background. view-shot's web version lets html2canvas paint
+ * white behind the card, so transparent stickers came out white once pasted into Instagram.
+ */
+async function captureWebPng(el: HTMLElement, size?: { width: number; height: number }): Promise<string> {
+  const html2canvas = (await import('html2canvas-pro')).default;
+  let canvas = await html2canvas(el, { useCORS: true, backgroundColor: null });
+  if (size) {
+    // A fresh canvas starts fully transparent, so resizing keeps the clear pixels clear.
+    const resized = document.createElement('canvas');
+    resized.width = size.width;
+    resized.height = size.height;
+    resized.getContext('2d')?.drawImage(canvas, 0, 0, size.width, size.height);
+    canvas = resized;
+  }
+  const uri = canvas.toDataURL('image/png');
   return uri.slice(uri.indexOf(',') + 1);
 }
 
