@@ -129,9 +129,13 @@ export default function SignIn() {
               onChangeText={setEmail}
               editable={mode !== 'resetCode'}
               autoCapitalize="none"
-              autoComplete="email"
+              // Password managers (iCloud Keychain in Safari especially) look for the "username"
+              // field next to a "current-password" one to recognise a sign-in form; "email" made
+              // Safari offer a new strong password instead of the saved login.
+              autoComplete="username"
               keyboardType="email-address"
-              textContentType="emailAddress"
+              textContentType="username"
+              nativeID="username"
               placeholder="you@example.com"
               style={mode === 'resetCode' ? { opacity: 0.6 } : undefined}
             />
@@ -160,6 +164,7 @@ export default function SignIn() {
                 secureTextEntry
                 autoComplete={mode === 'signIn' ? 'current-password' : 'new-password'}
                 textContentType={mode === 'signIn' ? 'password' : 'newPassword'}
+                nativeID={mode === 'signIn' ? 'current-password' : 'new-password'}
                 placeholder={t.auth.passwordPlaceholder}
                 onSubmitEditing={mode === 'resetCode' ? setNewPassword : submit}
               />
