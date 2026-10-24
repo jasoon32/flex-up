@@ -197,6 +197,8 @@ export default function WorkoutScreen() {
       await Promise.all(changes.map((c) => updateSet(c.before.id, c.patch)));
     } catch (e) {
       replaceSets((sets) => sets.map((x) => changes.find((c) => c.before.id === x.id)?.before ?? x));
+      // The tick was undone, so the rest it started no longer applies.
+      if (patch.completed) restTimer.stop();
       Alert.alert(W.couldntSaveSet, errorMessage(e));
     }
   };
