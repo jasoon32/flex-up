@@ -1,7 +1,8 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ScrollView, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import type { ReactNode } from 'react';
+import { Platform, ScrollView, Text } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import {
   useFonts,
   Inter_400Regular,
@@ -32,20 +33,32 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return <Loading />;
 
   return (
-    <I18nProvider>
-      <StatusBar style="dark" />
-      {isSupabaseConfigured ? (
-        <AuthProvider>
-          <RestTimerProvider>
-            <RootNavigator />
-          </RestTimerProvider>
-        </AuthProvider>
-      ) : (
-        <MissingConfig />
-      )}
-      <AlertHost />
-    </I18nProvider>
+    <WebSafeArea>
+      <I18nProvider>
+        <StatusBar style="dark" />
+        {isSupabaseConfigured ? (
+          <AuthProvider>
+            <RestTimerProvider>
+              <RootNavigator />
+            </RestTimerProvider>
+          </AuthProvider>
+        ) : (
+          <MissingConfig />
+        )}
+        <AlertHost />
+      </I18nProvider>
+    </WebSafeArea>
   );
+}
+
+/**
+ * On web, Expo Router hands every screen zero safe-area insets, so the tab bar and bottom
+ * buttons sat under the iPhone home indicator. The library's own provider measures the real
+ * insets (CSS env()) and keeps them updated on rotation. Native already has real insets.
+ */
+function WebSafeArea({ children }: { children: ReactNode }) {
+  if (Platform.OS !== 'web') return <>{children}</>;
+  return <SafeAreaProvider style={{ flex: 1 }}>{children}</SafeAreaProvider>;
 }
 
 function RootNavigator() {
