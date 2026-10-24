@@ -21,14 +21,10 @@
     <link rel="manifest" href="/manifest.json?v=4" />
     <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
     <style id="expo-reset">
-      /* These styles make the body full-height */
-      /* --app-height is the height actually visible (set by the script below). Opened from the
-         iPhone home screen, "100%" can come out taller than the screen and push the tab bar
-         off the bottom. */
       html,
       body {
         height: 100%;
-        height: var(--app-height, 100%);
+        margin: 0;
         background-color: #F4F4F0;
       }
       /* These styles disable body scrolling if you are using <ScrollView> */
@@ -36,26 +32,19 @@
         overflow: hidden;
         overscroll-behavior: none;
       }
-      /* These styles make the root element full-height */
+      /* The app is pinned to the four edges of the visible screen. Opened from the iPhone home
+         screen, "height: 100%" can come out taller than what's visible and push the tab bar off
+         the bottom; a fixed box with top/bottom 0 is sized by what's actually on screen. */
       #root {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
         display: flex;
-        height: 100%;
-        flex: 1;
+        flex-direction: column;
       }
     </style>
-    <script>
-      // Size the app to the visible area, and keep it right on rotation or when the toolbar moves.
-      (function () {
-        function fit() {
-          var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-          document.documentElement.style.setProperty('--app-height', Math.round(h) + 'px');
-        }
-        fit();
-        window.addEventListener('resize', fit);
-        window.addEventListener('orientationchange', fit);
-        if (window.visualViewport) window.visualViewport.addEventListener('resize', fit);
-      })();
-    </script>
   </head>
 
   <body>
