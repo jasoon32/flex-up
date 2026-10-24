@@ -67,6 +67,9 @@ async function getSyncedSession(id: string): Promise<SessionWithSets> {
   return changed ? getSession(id) : s;
 }
 
+/** Back to wherever the workout was opened from; Home when it was opened directly (web refresh, link). */
+const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
+
 export default function WorkoutScreen() {
   const { t: tr } = useI18n();
   const W = tr.workout;
@@ -297,7 +300,7 @@ export default function WorkoutScreen() {
         onPress: async () => {
           try {
             await deleteSession(id);
-            router.back();
+            leave();
           } catch (e) {
             Alert.alert(W.couldntDelete, errorMessage(e));
           }
@@ -309,7 +312,7 @@ export default function WorkoutScreen() {
     return loadError ? (
       <SafeAreaView style={[styles.screen, { padding: space.xl }]}>
         <ErrorBanner message={loadError} onRetry={load} />
-        <Button title={tr.common.goBack} variant="ghost" onPress={() => router.back()} />
+        <Button title={tr.common.goBack} variant="ghost" onPress={() => leave()} />
       </SafeAreaView>
     ) : (
       <Loading />
@@ -324,7 +327,7 @@ export default function WorkoutScreen() {
       <SafeAreaView edges={['top']} style={s.header}>
         <View style={s.headerBar}>
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => leave()}
             accessibilityRole="button"
             accessibilityLabel={W.close}
             style={s.close}
