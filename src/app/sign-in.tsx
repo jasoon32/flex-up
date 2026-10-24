@@ -109,7 +109,11 @@ export default function SignIn() {
                 <PixelCharacter pixel={4} />
               </View>
               <Pressable
-                onPress={() => setLang(other.id)}
+                onPress={() => {
+                  // Messages are stored already translated, so drop one rather than leave it in the old language.
+                  setError(null);
+                  setLang(other.id);
+                }}
                 accessibilityRole="button"
                 accessibilityLabel={other.label}
                 style={s.langButton}
