@@ -83,7 +83,10 @@ const write = (file, png, opaque) => {
 
 const appIcon = render(1024, { bg: LIME, fg: INK, mark: 0.7 });
 write('assets/icon.png', appIcon, true);
-write('public/apple-touch-icon.png', appIcon, true);
+// Web home-screen icons: Apple's 180 px touch icon, plus the 192 / 512 px icons manifests expect.
+write('public/apple-touch-icon.png', render(180, { bg: LIME, fg: INK, mark: 0.7 }), true);
+write('public/icon-192.png', render(192, { bg: LIME, fg: INK, mark: 0.7 }), true);
+write('public/icon-512.png', render(512, { bg: LIME, fg: INK, mark: 0.7 }), true);
 write('public/icon-1024.png', appIcon, true);
 write('assets/splash-icon.png', render(1024, { bg: null, fg: INK, mark: 0.7 }), false);
 write('assets/favicon.png', render(48, { bg: LIME, fg: INK, mark: 0.7 }), true);
