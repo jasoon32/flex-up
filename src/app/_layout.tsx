@@ -15,6 +15,7 @@ import { RestTimerProvider } from '@/providers/RestTimerProvider';
 import { I18nProvider, useI18n } from '@/i18n';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { Loading, styles } from '@/components/ui';
+import { AlertHost } from '@/components/AlertHost';
 import { colors, fonts } from '@/theme';
 
 export default function RootLayout() {
@@ -42,6 +43,7 @@ export default function RootLayout() {
       ) : (
         <MissingConfig />
       )}
+      <AlertHost />
     </I18nProvider>
   );
 }

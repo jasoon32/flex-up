@@ -1,0 +1,12 @@
+{
+  "name": "Flex Up",
+  "short_name": "Flex Up",
+  "description": "Log every set, beat your PBs and share your workouts.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F4F0",
+  "theme_color": "#F4F4F0",
+  "icons": [{ "src": "/icon-1024.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" }]
+}

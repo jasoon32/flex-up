@@ -43,6 +43,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "deploy:web": "expo export --platform web --output-dir dist && npx eas-cli deploy --prod --export-dir dist",
     "lint": "expo lint"
   },
   "private": true
