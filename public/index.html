@@ -3,8 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-    <!-- maximum-scale stops iPhone Safari zooming in when a weight or reps box is tapped. -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" />
+    <!-- maximum-scale stops iPhone Safari zooming in when a weight or reps box is tapped.
+         viewport-fit=cover exposes the safe-area insets, so the tab bar sits above the
+         home indicator when Flex Up is opened from the home screen. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no, viewport-fit=cover" />
     <title>%WEB_TITLE%</title>
     <meta name="description" content="Log every set, beat your PBs and share your workouts." />
     <meta name="theme-color" content="#F4F4F0" />
