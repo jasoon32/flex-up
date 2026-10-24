@@ -31,6 +31,17 @@
       body {
         overflow: hidden;
         overscroll-behavior: none;
+        /* iPhone: holding a finger on text (like a set number, to delete the set) shouldn't
+           select it or pop up Copy / Look Up and swallow the long-press. */
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      input,
+      textarea {
+        -webkit-user-select: text;
+        user-select: text;
       }
       /* The app is pinned to the four edges of the visible screen. Opened from the iPhone home
          screen, "height: 100%" can come out taller than what's visible and push the tab bar off
@@ -45,6 +56,22 @@
         flex-direction: column;
       }
     </style>
+    <script>
+      // After rotating, iPhone can leave a home-screen web app scrolled or zoomed so it looks
+      // frozen. The app never scrolls the page itself (everything scrolls inside #root), so snap
+      // the page back to the top-left once the rotation or resize settles.
+      (function () {
+        var t;
+        function settle() {
+          clearTimeout(t);
+          t = setTimeout(function () {
+            if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+          }, 150);
+        }
+        window.addEventListener('orientationchange', settle);
+        window.addEventListener('resize', settle);
+      })();
+    </script>
   </head>
 
   <body>
