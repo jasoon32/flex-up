@@ -1,7 +1,8 @@
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import type { ReactNode } from 'react';
-import { Platform, ScrollView, Text } from 'react-native';
+import { Platform, Pressable, ScrollView, Text } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import {
   useFonts,
@@ -68,16 +69,20 @@ function RootNavigator() {
 
   return (
     <Stack
-      screenOptions={{
+      screenOptions={({ navigation }) => ({
         headerStyle: { backgroundColor: colors.card },
         headerTintColor: colors.ink,
         headerTitleStyle: { fontFamily: fonts.display, fontSize: 17 },
         headerBackButtonDisplayMode: 'minimal',
         contentStyle: { backgroundColor: colors.bg },
-      }}
+        // Opened directly (a web refresh, or iOS reloading the home-screen app on this page)
+        // there's no back arrow and no browser to go back with, so offer a way Home instead.
+        headerLeft: navigation.canGoBack() ? undefined : () => <HomeBack label={t.tabs.home} />,
+      })}
     >
       <Stack.Protected guard={!!session}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        {/* The title is what back buttons name this screen (otherwise "(tabs), back"). */}
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, title: t.tabs.home }} />
         <Stack.Screen name="plan/[id]" options={{ title: t.editor.editTitle }} />
         <Stack.Screen name="workout/[id]" options={{ headerShown: false }} />
         <Stack.Screen
@@ -90,6 +95,20 @@ function RootNavigator() {
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
       </Stack.Protected>
     </Stack>
+  );
+}
+
+function HomeBack({ label }: { label: string }) {
+  return (
+    <Pressable
+      onPress={() => router.replace('/')}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={12}
+      style={{ paddingHorizontal: 8, paddingVertical: 4 }}
+    >
+      <Ionicons name="chevron-back" size={24} color={colors.ink} />
+    </Pressable>
   );
 }
 
