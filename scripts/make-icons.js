@@ -83,11 +83,18 @@ const write = (file, png, opaque) => {
 
 const appIcon = render(1024, { bg: LIME, fg: INK, mark: 0.7 });
 write('assets/icon.png', appIcon, true);
-// Web home-screen icons: Apple's 180 px touch icon, plus the 192 / 512 px icons manifests expect.
-write('public/apple-touch-icon.png', render(180, { bg: LIME, fg: INK, mark: 0.7 }), true);
-write('public/icon-192.png', render(192, { bg: LIME, fg: INK, mark: 0.7 }), true);
-write('public/icon-512.png', render(512, { bg: LIME, fg: INK, mark: 0.7 }), true);
-write('public/icon-1024.png', appIcon, true);
+// iOS 18+ icon variants. Dark: lime mark on a clear background (iOS adds its dark backdrop).
+// Tinted: a white mark that iOS recolours with the user's tint.
+write('assets/icon-dark.png', render(1024, { bg: null, fg: LIME, mark: 0.7 }), false);
+write('assets/icon-tinted.png', render(1024, { bg: null, fg: [0xff, 0xff, 0xff], mark: 0.7 }), false);
+
+// Web home-screen icons. A web app gets one icon for both modes and iOS darkens light icons
+// badly (ink bars on a darkened tile), so the web uses the design's "Dark" colourway.
+const webIcon = (size) => render(size, { bg: INK, fg: LIME, mark: 0.7 });
+write('public/apple-touch-icon.png', webIcon(180), true);
+write('public/icon-192.png', webIcon(192), true);
+write('public/icon-512.png', webIcon(512), true);
+write('public/icon-1024.png', webIcon(1024), true);
 write('assets/splash-icon.png', render(1024, { bg: null, fg: INK, mark: 0.7 }), false);
 write('assets/favicon.png', render(48, { bg: LIME, fg: INK, mark: 0.7 }), true);
 // Android adaptive icons crop to a circle or squircle, so the mark sits inside the safe zone.
