@@ -5,7 +5,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { formatTarget, listPlans } from '@/data/plans';
-import { deleteSession, getActiveSession, listSessionsSince, startSession } from '@/data/sessions';
+import {
+  deleteSession,
+  getActiveSession,
+  getSession,
+  listSessionsSince,
+  restoreSession,
+  startSession,
+} from '@/data/sessions';
+import { offerUndo } from '@/lib/undo';
 import { useFocusData } from '@/hooks/useAsync';
 import { locale, useI18n } from '@/i18n';
 import { WEEK_ORDER, dateThisWeek, formatLongDate, isSameDay, startOfToday, startOfWeek, today } from '@/lib/days';
@@ -80,8 +88,10 @@ export default function Home() {
         style: 'destructive',
         onPress: async () => {
           try {
+            const snapshot = await getSession(session.id);
             await deleteSession(session.id);
             reload();
+            offerUndo({ message: t.undo.workoutDiscarded, undo: () => restoreSession(snapshot) });
           } catch (e) {
             Alert.alert(t.workout.couldntDelete, errorMessage(e));
           }

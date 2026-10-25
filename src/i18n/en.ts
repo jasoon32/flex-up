@@ -133,7 +133,7 @@ export const en = {
     tip: 'Tip: long-press a set number to make it a warm-up, drop set or failure set, or to delete it.',
     deleteWorkout: 'Delete workout',
     deleteWorkoutQ: 'Delete this workout?',
-    deleteWorkoutMsg: 'This permanently removes it from your history.',
+    deleteWorkoutMsg: 'This removes it from your history. You can undo it for a few seconds.',
     deleteSetQ: 'Delete this set?',
     couldntSaveSet: 'Couldn’t save set',
     couldntDeleteSet: 'Couldn’t delete set',
@@ -659,6 +659,12 @@ export const en = {
     badLink: 'This plan link is broken or incomplete. Ask your friend to send it again.',
     moveUp: (n: number) => `Move exercise ${n} up`,
     moveDown: (n: number) => `Move exercise ${n} down`,
+  },
+  undo: {
+    undo: 'Undo',
+    workoutDeleted: 'Workout deleted',
+    workoutDiscarded: 'Workout discarded',
+    couldntRestore: 'Couldn’t restore the workout',
   },
   validation: {
     required: (label: string) => `${label} is required.`,

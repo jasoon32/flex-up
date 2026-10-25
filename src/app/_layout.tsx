@@ -18,6 +18,7 @@ import { I18nProvider, useI18n } from '@/i18n';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { Loading, styles } from '@/components/ui';
 import { AlertHost } from '@/components/AlertHost';
+import { UndoBar } from '@/components/UndoBar';
 import { colors, fonts } from '@/theme';
 
 export default function RootLayout() {
@@ -41,6 +42,7 @@ export default function RootLayout() {
           <AuthProvider>
             <RestTimerProvider>
               <RootNavigator />
+              <UndoBar />
             </RestTimerProvider>
           </AuthProvider>
         ) : (

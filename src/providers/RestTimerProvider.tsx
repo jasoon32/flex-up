@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Pressable, StyleSheet, Text, Vibration, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePathname } from 'expo-router';
+import { TAB_ROUTES } from '@/lib/tabs';
 import { useAudioPlayer } from 'expo-audio';
 import { Ionicons } from '@expo/vector-icons';
 import { useI18n } from '@/i18n';
@@ -23,7 +24,6 @@ interface RestTimer {
 
 const RestTimerContext = createContext<RestTimer>({ start: () => {}, stop: () => {} });
 
-const TAB_ROUTES = ['/', '/plans', '/history', '/character', '/settings'];
 /** A rest that ended this long ago (app was in the background) finishes silently. */
 const STALE_MS = 5000;
 const OVER_SHOWN_MS = 4000;

@@ -122,7 +122,7 @@ export const zh: Strings = {
     tip: '提示：长按组号可设为热身组、递减组或力竭组，也可删除。',
     deleteWorkout: '删除训练',
     deleteWorkoutQ: '删除这次训练？',
-    deleteWorkoutMsg: '这会从历史中永久删除。',
+    deleteWorkoutMsg: '将从历史记录中移除。几秒内可以撤销。',
     deleteSetQ: '删除这一组？',
     couldntSaveSet: '无法保存这一组',
     couldntDeleteSet: '无法删除这一组',
@@ -640,6 +640,12 @@ export const zh: Strings = {
     badLink: '这个计划链接已损坏或不完整，请让朋友重新发送。',
     moveUp: (n) => `把动作 ${n} 上移`,
     moveDown: (n) => `把动作 ${n} 下移`,
+  },
+  undo: {
+    undo: '撤销',
+    workoutDeleted: '已删除训练',
+    workoutDiscarded: '已放弃训练',
+    couldntRestore: '无法恢复这次训练',
   },
   validation: {
     required: (label) => `请填写${label}。`,

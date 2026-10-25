@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { Alert } from '@/lib/alert';
+import { offerUndo } from '@/lib/undo';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -27,6 +28,7 @@ import {
   getSession,
   groupSets,
   reopenSession,
+  restoreSession,
   saveSessionAsPlan,
   setExerciseUnit,
   syncSessionWithPlan,
@@ -430,9 +432,12 @@ export default function WorkoutScreen() {
         text: tr.common.delete,
         style: 'destructive',
         onPress: async () => {
+          // Kept so Undo can put it all back: workouts get deleted by accident.
+          const snapshot = session;
           try {
             await deleteSession(id);
             leave();
+            if (snapshot) offerUndo({ message: tr.undo.workoutDeleted, undo: () => restoreSession(snapshot) });
           } catch (e) {
             Alert.alert(W.couldntDelete, errorMessage(e));
           }
