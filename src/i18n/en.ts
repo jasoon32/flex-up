@@ -200,6 +200,8 @@ export const en = {
     dialogTitle: 'Share your workout',
     notAvailable: 'Sharing isn’t available here. Take a screenshot of the card instead.',
     couldntShare: 'Couldn’t share',
+    ready: 'Ready to share',
+    readyMsg: 'Your image is ready. Tap Share to send it.',
     done: (plan: string) => `${plan} done`,
     poses: {
       stand: (name: string) => name,

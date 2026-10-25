@@ -183,6 +183,8 @@ export const zh: Strings = {
     dialogTitle: '分享你的训练',
     notAvailable: '此处无法分享，请直接截图卡片。',
     couldntShare: '无法分享',
+    ready: '可以分享了',
+    readyMsg: '图片已经准备好，点“分享”发送。',
     done: (plan) => `${plan} 完成`,
     poses: {
       stand: (name) => name,

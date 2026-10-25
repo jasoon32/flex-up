@@ -10,7 +10,7 @@ import { Alert } from '@/lib/alert';
 import { errorMessage } from '@/lib/errors';
 import { readLook } from '@/lib/character';
 import { FRAME_COUNT, FRAME_MS } from '@/lib/poses';
-import { copyStill, nextPaint, shareGif, shareStill, type GifOptions } from '@/lib/shareImage';
+import { copyStill, nextPaint, sendPrepared, shareGif, shareStill, type GifOptions, type ShareResult } from '@/lib/shareImage';
 import { useAuth } from '@/providers/AuthProvider';
 import { Button, ErrorBanner, Loading, styles } from '@/components/ui';
 import { useRepFrame } from '@/components/AnimatedLifter';
@@ -96,6 +96,21 @@ export default function Share() {
         );
       }
       if (result === 'unavailable') Alert.alert(S.share, S.notAvailable);
+      // Making the image outlasted the tap on iPhone: one more tap opens the share sheet.
+      if (result === 'ready') {
+        Alert.alert(S.ready, S.readyMsg, [
+          { text: t.common.cancel, style: 'cancel' },
+          {
+            text: S.share,
+            onPress: () => {
+              sendPrepared().then(
+                (r: ShareResult) => r === 'unavailable' && Alert.alert(S.share, S.notAvailable),
+                (e) => Alert.alert(S.couldntShare, errorMessage(e)),
+              );
+            },
+          },
+        ]);
+      }
     } catch (e) {
       Alert.alert(S.couldntShare, errorMessage(e));
     } finally {
@@ -108,9 +123,11 @@ export default function Share() {
   const copy = async () => {
     setBusy(S.sharing);
     try {
-      setForced(null);
-      await nextPaint();
-      const ok = await copyStill(cardRef);
+      // Nothing may be awaited before copyStill: on the web it must reach the clipboard during the tap.
+      const ok = await copyStill(cardRef, async () => {
+        setForced(null);
+        await nextPaint();
+      });
       if (ok) Alert.alert(S.copied, S.copiedMsg);
       else Alert.alert(S.copySticker, S.copyFailed);
     } finally {

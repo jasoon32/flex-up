@@ -8,7 +8,11 @@ import { File, Paths } from 'expo-file-system';
 import { GIFEncoder, applyPalette, quantize } from 'gifenc';
 import UPNG from 'upng-js';
 
-export type ShareResult = 'shared' | 'downloaded' | 'unavailable';
+/**
+ * 'ready': the file is made but the phone refused to open the share sheet this late after the
+ * tap; call sendPrepared() from a fresh tap. 'cancelled': the user closed the share sheet.
+ */
+export type ShareResult = 'shared' | 'downloaded' | 'unavailable' | 'ready' | 'cancelled';
 type CardRef = RefObject<ComponentRef<typeof View> | null>;
 
 /** GIF size: half of a 1080×1920 Story keeps files small, and pixel art stays crisp. */
@@ -51,13 +55,47 @@ async function captureWebPng(el: HTMLElement, size?: { width: number; height: nu
   return uri.slice(uri.indexOf(',') + 1);
 }
 
+/** The share waiting for a fresh tap after the phone said "not allowed" (see ShareResult). */
+let prepared: (() => Promise<void>) | null = null;
+
+const errorName = (e: unknown) => (e instanceof Error || e instanceof DOMException ? e.name : '');
+
+/**
+ * Opens the share sheet for the file made last, from a tap. It calls the browser straight
+ * away, before anything else, so the tap still counts as the user asking to share.
+ */
+export function sendPrepared(): Promise<ShareResult> {
+  const send = prepared;
+  prepared = null;
+  if (!send) return Promise.resolve('unavailable');
+  return send().then(
+    () => 'shared' as const,
+    (e) => {
+      if (errorName(e) === 'AbortError') return 'cancelled' as const;
+      throw e;
+    },
+  );
+}
+
 /** Opens the share sheet for a file; on the web, the browser's share sheet or a download. */
 export async function shareBytes(bytes: Uint8Array, name: string, mimeType: string, uti: string, title: string): Promise<ShareResult> {
   if (Platform.OS === 'web') {
     const file = new globalThis.File([bytes as BlobPart], name, { type: mimeType });
     if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ files: [file], title });
-      return 'shared';
+      const send = () => navigator.share({ files: [file], title });
+      try {
+        await send();
+        return 'shared';
+      } catch (e) {
+        if (errorName(e) === 'AbortError') return 'cancelled';
+        // iPhone Safari only opens the share sheet within about a second of a tap, and drawing
+        // the card (or every GIF frame) takes longer. Keep the file for one more tap.
+        if (errorName(e) === 'NotAllowedError') {
+          prepared = send;
+          return 'ready';
+        }
+        throw e;
+      }
     }
     const url = URL.createObjectURL(file);
     const a = document.createElement('a');
@@ -83,11 +121,27 @@ export async function shareStill(ref: CardRef, title: string): Promise<ShareResu
 
 /**
  * Copies the card as a PNG, so it can be pasted into an Instagram Story as a movable sticker.
- * Returns false where the clipboard can't hold images.
+ * `beforeCapture` readies the card (e.g. shows the still frame). Returns false where the
+ * clipboard can't hold images.
  */
-export async function copyStill(ref: CardRef): Promise<boolean> {
+export async function copyStill(ref: CardRef, beforeCapture: () => Promise<void>): Promise<boolean> {
   if (!ref.current) return false;
+  if (Platform.OS === 'web' && typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+    // Safari only lets a page write to the clipboard during the tap itself, so the clipboard is
+    // asked right now and given a promise of the image, which fills in once it's drawn.
+    const png = (async () => {
+      await beforeCapture();
+      return new Blob([base64ToBytes(await capturePng(ref)) as BlobPart], { type: 'image/png' });
+    })();
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+      return true;
+    } catch {
+      return false;
+    }
+  }
   try {
+    await beforeCapture();
     await Clipboard.setImageAsync(await capturePng(ref));
     return true;
   } catch {
