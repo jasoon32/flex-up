@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import type { ColorValue } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useI18n } from '@/i18n';
 import { colors, fonts } from '@/theme';
 
@@ -13,11 +14,19 @@ const icon = (outline: IconName, filled: IconName) =>
 
 export default function TabsLayout() {
   const { t } = useI18n();
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border },
+        // The default 49pt bar leaves the 12pt label only ~10pt under the icon, cutting it in half.
+        // Setting a height replaces the default, so the home-indicator inset is added back here.
+        tabBarStyle: {
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
+          height: 58 + insets.bottom,
+          paddingBottom: insets.bottom,
+        },
         tabBarActiveTintColor: colors.ink,
         tabBarInactiveTintColor: colors.muted,
         tabBarLabelStyle: { fontFamily: fonts.semibold, fontSize: 12 },
