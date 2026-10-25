@@ -23,7 +23,8 @@ import {
   updateSet,
 } from '@/data/sessions';
 import { formatTarget, getPlan } from '@/data/plans';
-import { comparePb, getBestsBefore, PB_BROKEN, PB_MATCHED, type Best } from '@/data/achievements';
+import { comparePb, getBestsBefore, type Best } from '@/data/achievements';
+import { pbIcon, PixelIcon } from '@/components/PixelBadge';
 import { locale, useI18n } from '@/i18n';
 import { errorMessage } from '@/lib/errors';
 import { validateName } from '@/lib/validation';
@@ -45,7 +46,7 @@ interface Context {
   targets: Map<string, string>;
   /** Plan rest times in seconds per exercise name; missing or null uses the default. */
   rests: Map<string, number | null>;
-  /** Bests from earlier workouts, for 🏆 / 🔥 as sets are ticked. */
+  /** Bests from earlier workouts, for trophies and flames as sets are ticked. */
   bests: Map<string, Best>;
 }
 
@@ -178,7 +179,7 @@ export default function WorkoutScreen() {
     );
     if (patch.completed) {
       setPicked(null);
-      // A set that breaks or ties the best gets a little buzz as its 🏆 / 🔥 appears.
+      // A set that breaks or ties the best gets a little buzz as its trophy or flame appears.
       if (group) {
         const best = ctx.bests.get(group.name);
         const before = comparePb(group.name, group.sets, best);
@@ -404,7 +405,9 @@ export default function WorkoutScreen() {
             };
             const finished = g.sets.length > 0 && g.sets.every((x) => x.completed);
             const pb = comparePb(g.name, g.sets, ctx.bests.get(g.name));
-            const badge = pb ? ` ${pb.matched ? PB_MATCHED : PB_BROKEN}` : '';
+            const badge = pb ? (
+              <PixelIcon name={pbIcon(pb)} size={16} label={pb.matched ? tr.celebrate.pbMatched(1) : tr.celebrate.pbBroken(1)} />
+            ) : null;
             if (inProgress && finished && !expanded.has(g.order)) {
               return (
                 <Pressable
@@ -420,10 +423,12 @@ export default function WorkoutScreen() {
                     <Ionicons name="checkmark" size={16} color={colors.lime} />
                   </View>
                   <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-                    <Text style={s.collapsedTitle} numberOfLines={1}>
-                      {trName(g.name)}
+                    <View style={s.titleRow}>
+                      <Text style={[s.collapsedTitle, { flexShrink: 1 }]} numberOfLines={1}>
+                        {trName(g.name)}
+                      </Text>
                       {badge}
-                    </Text>
+                    </View>
                     <Text style={styles.small} numberOfLines={1}>
                       {g.sets.map((x) => formatSet({ ...x, rpe: null })).join(' · ')}
                     </Text>
@@ -449,10 +454,10 @@ export default function WorkoutScreen() {
                   accessibilityLabel={collapsible ? W.hideSets(trName(g.name)) : undefined}
                   style={[styles.between, { paddingHorizontal: 2, paddingBottom: 4, alignItems: 'center' }]}
                 >
-                  <Text style={s.exTitle}>
-                    {trName(g.name)}
+                  <View style={[s.titleRow, { flexShrink: 1 }]}>
+                    <Text style={s.exTitle}>{trName(g.name)}</Text>
                     {badge}
-                  </Text>
+                  </View>
                   {collapsible ? (
                     <Ionicons name="chevron-up" size={18} color={colors.muted} />
                   ) : (
@@ -592,4 +597,5 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   collapsedTitle: { fontFamily: fonts.display, fontSize: 16, color: colors.ink },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
 });

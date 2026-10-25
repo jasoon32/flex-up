@@ -1,18 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, Vibration, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  formatPr,
-  getWorkoutRecap,
-  PB_BROKEN,
-  PB_MATCHED,
-  pbRow,
-  type Milestone,
-  type WorkoutRecap,
-} from '@/data/achievements';
+import { formatPr, getWorkoutRecap, type Milestone, type WorkoutRecap } from '@/data/achievements';
 import { locale, useI18n, type Strings } from '@/i18n';
 import { errorMessage } from '@/lib/errors';
 import { readLook } from '@/lib/character';
@@ -20,6 +12,7 @@ import { isHeavy, poseFor } from '@/lib/poses';
 import { useAuth } from '@/providers/AuthProvider';
 import { Button, ErrorBanner, Loading } from '@/components/ui';
 import { Confetti } from '@/components/Confetti';
+import { pbIcon, PbIcons, PixelIcon } from '@/components/PixelBadge';
 import { AnimatedLifter, useRepFrame } from '@/components/AnimatedLifter';
 import { colors, fonts, radius, space } from '@/theme';
 import { toKg } from '@/lib/units';
@@ -104,15 +97,21 @@ export default function Celebrate() {
           <View style={s.stats}>
             <Stat value={t.units.minutesShort(recap.minutes)} label={C.time} />
             <Stat value={`${recap.completedSets}`} label={C.sets(recap.completedSets)} />
-            <Stat value={`⚡${recap.streakDays}`} label={C.streakLabel} />
+            <Stat
+              value={`${recap.streakDays}`}
+              label={C.streakLabel}
+              icon={<PixelIcon name="bolt" size={22} color={colors.lime} accent={colors.lime} />}
+            />
           </View>
 
           {recap.prs.length > 0 ? (
             <View style={s.prs}>
-              <Text style={s.pbRow}>{pbRow(recap.prs)}</Text>
+              <View style={s.pbRow}>
+                <PbIcons prs={recap.prs} size={32} gap={4} color={colors.onInk} accent={colors.lime} />
+              </View>
               {recap.prs.map((pr) => (
                 <View key={pr.exercise} style={s.prRow}>
-                  <Text style={{ fontSize: 16 }}>{pr.matched ? PB_MATCHED : PB_BROKEN}</Text>
+                  <PixelIcon name={pbIcon(pr)} size={16} color={colors.onInk} accent={colors.lime} />
                   <Text style={s.prName} numberOfLines={1}>
                     {trName(pr.exercise)}
                   </Text>
@@ -158,10 +157,13 @@ export default function Celebrate() {
   );
 }
 
-function Stat({ value, label, highlight }: { value: string; label: string; highlight?: boolean }) {
+function Stat({ value, label, highlight, icon }: { value: string; label: string; highlight?: boolean; icon?: ReactNode }) {
   return (
     <View style={s.stat}>
-      <Text style={[s.statValue, highlight && { color: colors.lime }]}>{value}</Text>
+      <View style={s.statTop}>
+        {icon}
+        <Text style={[s.statValue, highlight && { color: colors.lime }]}>{value}</Text>
+      </View>
       <Text style={s.statLabel}>{label}</Text>
     </View>
   );
@@ -185,10 +187,11 @@ const s = StyleSheet.create({
   stageBig: { width: 230, height: 300, borderWidth: 2, borderColor: colors.lime },
   stats: { flexDirection: 'row', gap: 8 },
   stat: { flex: 1, backgroundColor: colors.inkRaised, borderRadius: radius.md, padding: space.md, alignItems: 'center', gap: 2 },
+  statTop: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   statValue: { fontFamily: fonts.display, fontSize: 22, color: colors.onInk },
   statLabel: { fontSize: 12, fontFamily: fonts.medium, color: colors.onInkMuted },
   prs: { backgroundColor: colors.inkRaised, borderRadius: radius.md, padding: space.md, gap: 10 },
-  pbRow: { fontSize: 24, textAlign: 'center', letterSpacing: 2 },
+  pbRow: { alignItems: 'center' },
   prRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   prName: { flex: 1, fontSize: 14, fontFamily: fonts.semibold, color: colors.onInk },
   prValue: { fontSize: 13, fontFamily: fonts.medium, color: colors.lime },
