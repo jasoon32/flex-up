@@ -8,7 +8,7 @@ export type Muscle = (typeof MUSCLES)[number];
  */
 const RULES: [RegExp, Muscle | null][] = [
   [
-    /\b(run|walk|bike|rowing machine|elliptical|stair|jump rope|burpee|box jump|battle rope|sled|clean|snatch|thruster|swing|get-up|farmer)/,
+    /\b(run|walk|bike|elliptical|stair|jump rope|burpee|box jump|battle rope|sled|clean|snatch|thruster|swing|get-up|farmer)/,
     null,
   ],
   [/crunch|plank|sit-up|ab wheel|leg raise|knee raise|captain|russian twist|dead bug|pallof|woodchopper|mountain climber|\babs?\b|core/, 'core'],

@@ -559,8 +559,8 @@ export const zh: Strings = {
     couldntSave: '无法保存计划',
   },
   tools: {
-    next: '下次',
-    suggestUp: '每组都做到了次数上限，可以加重了。',
+    next: (target) => `下次：${target}`,
+    suggestUp: '每组都达到了目标次数，可以加重了。',
     suggestReps: '保持重量，争取多做一次。',
     use: '使用',
     applyLabel: (target) => `把未完成的组填为 ${target}`,
@@ -601,7 +601,7 @@ export const zh: Strings = {
   friends: {
     title: '本周好友榜',
     intro: '看看这周谁练得最多。和朋友交换好友码即可互相添加。',
-    you: '你',
+    you: (name) => `${name}（你）`,
     meta: (w, s) => `${w} 次训练 · ${s} 组`,
     yourCode: '你的好友码',
     copy: '复制',

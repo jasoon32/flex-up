@@ -93,6 +93,8 @@ function RootNavigator() {
         {/* The exercise screen sets its own title (the exercise's name). */}
         <Stack.Screen name="exercise/[name]" options={{ title: '' }} />
         <Stack.Screen name="programs" options={{ title: t.programs.title }} />
+        {/* Five tabs fit a phone, so Settings opens from Character's gear and Home's account button. */}
+        <Stack.Screen name="settings" options={{ title: t.settings.title }} />
         <Stack.Screen name="import-plan" options={{ title: t.planShare.importTitle }} />
       </Stack.Protected>
       <Stack.Protected guard={!session}>

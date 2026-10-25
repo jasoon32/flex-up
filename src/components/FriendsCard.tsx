@@ -109,7 +109,7 @@ export function FriendsCard() {
           </View>
           <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
             <Text style={s.name} numberOfLines={1}>
-              {row.is_me ? `${row.name || t.character.defaultName} (${F.you})` : row.name || t.character.defaultName}
+              {row.is_me ? F.you(row.name || t.character.defaultName) : row.name || t.character.defaultName}
             </Text>
             <Text style={styles.small}>{F.meta(row.workouts, row.sets)}</Text>
           </View>

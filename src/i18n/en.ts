@@ -577,8 +577,8 @@ export const en = {
     couldntSave: 'Couldn’t save plan',
   },
   tools: {
-    next: 'Next',
-    suggestUp: 'Every set hit the top of the range: time to go up.',
+    next: (target: string) => `Next: ${target}`,
+    suggestUp: 'Every set hit its target reps: time to go up.',
     suggestReps: 'Same weight, aim for one more rep.',
     use: 'Use',
     applyLabel: (target: string) => `Fill the unticked sets with ${target}`,
@@ -620,7 +620,7 @@ export const en = {
   friends: {
     title: 'Friends this week',
     intro: 'See who trains most this week. Swap codes with a friend to add each other.',
-    you: 'You',
+    you: (name: string) => `${name} (you)`,
     meta: (w: number, s: number) => `${plural(w, 'workout', 'workouts')} · ${plural(s, 'set', 'sets')}`,
     yourCode: 'Your code',
     copy: 'Copy',

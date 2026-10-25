@@ -374,6 +374,12 @@ export default function WorkoutScreen() {
       const created = await addSessionExercise(id, name, order);
       replaceSets((sets) => [...sets, created]);
       setNewExercise(null);
+      // Last time, records and notes were loaded for the exercises the workout started with;
+      // fetch them for the new one too, so its "Last" column and suggestion work.
+      if (session) {
+        const fresh = await loadContext({ ...session, sets: [...session.sets, created] }).catch(() => null);
+        if (fresh) setCtx(fresh);
+      }
     } catch (e) {
       Alert.alert(W.couldntAddExercise, errorMessage(e));
     }
@@ -628,9 +634,7 @@ export default function WorkoutScreen() {
                   <View style={s.suggest}>
                     <Ionicons name={sug.kind === 'weight' ? 'trending-up' : 'repeat'} size={18} color={colors.ink} />
                     <View style={{ flex: 1, gap: 1 }}>
-                      <Text style={s.suggestTitle}>
-                        {TL.next}: {sugText}
-                      </Text>
+                      <Text style={s.suggestTitle}>{TL.next(sugText)}</Text>
                       <Text style={s.suggestText}>{sug.kind === 'weight' ? TL.suggestUp : TL.suggestReps}</Text>
                     </View>
                     {!sugApplied ? (
@@ -682,8 +686,8 @@ export default function WorkoutScreen() {
                     {groupErrors[g.order]}
                   </Text>
                 ) : null}
+                <Button title={W.addSet} variant="secondary" small onPress={() => appendSet(g)} />
                 <View style={s.toolRow}>
-                  <Button title={W.addSet} variant="secondary" small onPress={() => appendSet(g)} style={{ flexGrow: 1 }} />
                   {inProgress && canWarmup ? (
                     <ToolChip icon="flame-outline" label={TL.warmup} a11y={TL.warmupLabel(trName(g.name))} onPress={() => addWarmup(g, step)} />
                   ) : null}
@@ -959,10 +963,11 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   useText: { fontFamily: fonts.bold, fontSize: 13, color: colors.lime },
-  toolRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
+  toolRow: { flexDirection: 'row', gap: 6, alignItems: 'center' },
   chip: {
+    flexGrow: 1,
     height: 40,
-    minWidth: 40,
+    minWidth: 44,
     paddingHorizontal: 10,
     borderRadius: 10,
     borderWidth: 1,

@@ -44,8 +44,6 @@ export default function TabsLayout() {
         name="character"
         options={{ title: t.tabs.character, tabBarIcon: icon('happy-outline', 'happy') }}
       />
-      {/* Five tabs fit a phone; Settings opens from the gear on Character and the account button on Home. */}
-      <Tabs.Screen name="settings" options={{ title: t.tabs.settings, href: null }} />
     </Tabs>
   );
 }
