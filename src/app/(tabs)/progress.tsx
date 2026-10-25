@@ -15,6 +15,7 @@ import { MUSCLES, WEEKLY_SET_TARGET } from '@/lib/muscles';
 import { formatKg, formatVolume, shortDate, signed } from '@/lib/format';
 import { useAuth } from '@/providers/AuthProvider';
 import { EmptyState, ErrorBanner, Eyebrow, Loading, styles } from '@/components/ui';
+import { BadgeIcon } from '@/components/BadgeIcon';
 import { PixelCharacter } from '@/components/PixelCharacter';
 import { MonthCalendar } from '@/components/MonthCalendar';
 import { BodyWeightCard } from '@/components/BodyWeightCard';
@@ -303,7 +304,7 @@ function Badges({ progress }: { progress: Progress }) {
             key={b.id}
             onPress={() =>
               Alert.alert(
-                `${b.icon} ${P.badgeNames[b.id]}`,
+                P.badgeNames[b.id],
                 `${P.badgeHow[b.id]}\n${b.earned ? P.earned : P.notYet(Math.floor(b.progress * 100))}`,
               )
             }
@@ -311,7 +312,7 @@ function Badges({ progress }: { progress: Progress }) {
             accessibilityLabel={`${P.badgeNames[b.id]}, ${b.earned ? P.earned : P.notYet(Math.floor(b.progress * 100))}`}
             style={[s.badge, b.earned && s.badgeOn]}
           >
-            <Text style={[s.badgeIcon, !b.earned && { opacity: 0.25 }]}>{b.icon}</Text>
+            <BadgeIcon id={b.id} earned={b.earned} />
             <Text style={[s.badgeName, !b.earned && { color: colors.faint }]} numberOfLines={2}>
               {P.badgeNames[b.id]}
             </Text>
@@ -405,7 +406,6 @@ const s = StyleSheet.create({
     gap: 4,
   },
   badgeOn: { borderColor: colors.ink, borderWidth: 2, backgroundColor: colors.limeSoft },
-  badgeIcon: { fontSize: 28 },
   badgeName: { fontFamily: fonts.semibold, fontSize: 12, textAlign: 'center', color: colors.ink },
   badgeTrack: { width: '80%', height: 4, borderRadius: 2, backgroundColor: colors.bg, overflow: 'hidden' },
   badgeFill: { height: '100%', backgroundColor: colors.faint },

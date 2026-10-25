@@ -83,7 +83,6 @@ export type BadgeId =
 
 export interface Badge {
   id: BadgeId;
-  icon: string;
   earned: boolean;
   /** 0–1 toward earning it. */
   progress: number;
@@ -310,26 +309,26 @@ export async function loadProgress(weeksBack = 8): Promise<Progress> {
 
   const hours = sessions.map((s) => new Date(s.started_at).getHours());
   const ratio = (have: number, need: number) => Math.min(1, have / need);
-  const badgeList: [BadgeId, string, number][] = [
-    ['first', '🎉', ratio(sessions.length, 1)],
-    ['w10', '💪', ratio(sessions.length, 10)],
-    ['w25', '🥉', ratio(sessions.length, 25)],
-    ['w50', '🥈', ratio(sessions.length, 50)],
-    ['w100', '🥇', ratio(sessions.length, 100)],
-    ['streak3', '⚡', ratio(longest, 3)],
-    ['streak7', '🔥', ratio(longest, 7)],
-    ['pr1', '🏆', ratio(records, 1)],
-    ['pr10', '👑', ratio(records, 10)],
-    ['pr50', '💎', ratio(records, 50)],
-    ['sets100', '✅', ratio(working.length, 100)],
-    ['sets1000', '🧱', ratio(working.length, 1000)],
-    ['ton10', '🏋️', ratio(volumeKg, 10000)],
-    ['ton100', '🚀', ratio(volumeKg, 100000)],
-    ['early', '🌅', hours.some((h) => h < 7) ? 1 : 0],
-    ['late', '🌙', hours.some((h) => h >= 21) ? 1 : 0],
-    ['long', '⏱️', sessions.some((s) => minutesOf(s) >= 90) ? 1 : 0],
-    ['lvl5', '⭐', ratio(level.level, 5)],
-    ['lvl10', '🌟', ratio(level.level, 10)],
+  const badgeList: [BadgeId, number][] = [
+    ['first', ratio(sessions.length, 1)],
+    ['w10', ratio(sessions.length, 10)],
+    ['w25', ratio(sessions.length, 25)],
+    ['w50', ratio(sessions.length, 50)],
+    ['w100', ratio(sessions.length, 100)],
+    ['streak3', ratio(longest, 3)],
+    ['streak7', ratio(longest, 7)],
+    ['pr1', ratio(records, 1)],
+    ['pr10', ratio(records, 10)],
+    ['pr50', ratio(records, 50)],
+    ['sets100', ratio(working.length, 100)],
+    ['sets1000', ratio(working.length, 1000)],
+    ['ton10', ratio(volumeKg, 10000)],
+    ['ton100', ratio(volumeKg, 100000)],
+    ['early', hours.some((h) => h < 7) ? 1 : 0],
+    ['late', hours.some((h) => h >= 21) ? 1 : 0],
+    ['long', sessions.some((s) => minutesOf(s) >= 90) ? 1 : 0],
+    ['lvl5', ratio(level.level, 5)],
+    ['lvl10', ratio(level.level, 10)],
   ];
 
   return {
@@ -344,7 +343,7 @@ export async function loadProgress(weeksBack = 8): Promise<Progress> {
     longestStreak: longest,
     currentStreak: current,
     level,
-    badges: badgeList.map(([id, icon, progress]) => ({ id, icon, earned: progress >= 1, progress })),
+    badges: badgeList.map(([id, progress]) => ({ id, earned: progress >= 1, progress })),
   };
 }
 
