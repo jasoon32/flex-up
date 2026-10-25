@@ -38,6 +38,7 @@
       ]
     },
     "web": {
+      "name": "Flex Up Pro",
       "favicon": "./assets/favicon.png"
     },
     "plugins": [

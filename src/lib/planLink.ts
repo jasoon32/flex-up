@@ -2,7 +2,7 @@ import { asUnit } from './units';
 import type { DayOfWeek, DraftExercise, PlanWithExercises } from './types';
 
 /** Where shared plan links open. */
-export const APP_URL = 'https://flex-up--next.expo.app';
+export const APP_URL = 'https://flex-up--pro.expo.app';
 
 export interface SharedPlan {
   name: string;

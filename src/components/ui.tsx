@@ -148,6 +148,15 @@ export function Badge({ label, tone }: { label: string; tone: 'done' | 'progress
   );
 }
 
+/** The lime PRO tag that sits beside the Flex Up name. */
+export function ProTag() {
+  return (
+    <View style={styles.pro} accessibilityLabel="Pro">
+      <Text style={styles.proText}>PRO</Text>
+    </View>
+  );
+}
+
 /** Small uppercase label above a section ("TODAY'S WORKOUT"). */
 export function Eyebrow({ children, color = colors.muted }: { children: ReactNode; color?: string }) {
   return <Text style={[styles.eyebrow, { color }]}>{children}</Text>;
@@ -216,6 +225,16 @@ export const styles = StyleSheet.create({
   },
   badgeText: { fontSize: 11, fontFamily: fonts.bold },
   eyebrow: { fontSize: 12, fontFamily: fonts.semibold, textTransform: 'uppercase', letterSpacing: 1 },
+  pro: {
+    height: 24,
+    paddingHorizontal: 9,
+    borderRadius: 12,
+    backgroundColor: colors.lime,
+    borderWidth: 1.5,
+    borderColor: colors.ink,
+    justifyContent: 'center',
+  },
+  proText: { fontSize: 12, fontFamily: fonts.display, letterSpacing: 1.5, color: colors.ink },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   between: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
 });

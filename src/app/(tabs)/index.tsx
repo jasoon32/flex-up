@@ -14,7 +14,7 @@ import { readLook } from '@/lib/character';
 import { loadLevel } from '@/data/progress';
 import type { LevelInfo } from '@/lib/levels';
 import { useAuth } from '@/providers/AuthProvider';
-import { Badge, Button, Card, ErrorBanner, Eyebrow, Loading, styles } from '@/components/ui';
+import { Badge, Button, Card, ErrorBanner, Eyebrow, Loading, ProTag, styles } from '@/components/ui';
 import { PixelCharacter } from '@/components/PixelCharacter';
 import { colors, fonts, radius, space } from '@/theme';
 import type { DayOfWeek, PlanWithExercises, WorkoutSession } from '@/lib/types';
@@ -100,7 +100,10 @@ export default function Home() {
         <View style={styles.between}>
           <View style={{ gap: 2 }}>
             <Text style={s.date}>{formatLongDate(new Date())}</Text>
-            <Text style={s.brand}>Flex Up</Text>
+            <View style={[styles.row, { gap: 8 }]}>
+              <Text style={s.brand}>Flex Up</Text>
+              <ProTag />
+            </View>
           </View>
           <Pressable
             onPress={() => router.push('/settings')}

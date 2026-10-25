@@ -7,7 +7,7 @@ import { Alert } from '@/lib/alert';
 import { errorMessage } from '@/lib/errors';
 import { validateEmail } from '@/lib/validation';
 import { LANGUAGES, useI18n } from '@/i18n';
-import { Button, TextField } from '@/components/ui';
+import { Button, ProTag, TextField } from '@/components/ui';
 import { PixelCharacter } from '@/components/PixelCharacter';
 import { colors, fonts, radius } from '@/theme';
 
@@ -121,7 +121,14 @@ export default function SignIn() {
                 <Text style={s.langText}>{other.label}</Text>
               </Pressable>
             </View>
-            <Text style={s.title}>{resetting ? t.auth.resetTitle : 'Flex Up'}</Text>
+            {resetting ? (
+              <Text style={s.title}>{t.auth.resetTitle}</Text>
+            ) : (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Text style={s.title}>Flex Up</Text>
+                <ProTag />
+              </View>
+            )}
             <Text style={s.tagline}>{resetting ? t.auth.resetIntro : t.auth.tagline}</Text>
           </View>
 
