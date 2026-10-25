@@ -318,6 +318,7 @@ export const zh: Strings = {
     done: '完成',
     setN: (n) => `第 ${n} 组`,
     weightLabel: (n, unit) => `第 ${n} 组重量（${unit}）`,
+    addedWeightLabel: (n) => `第 ${n} 组：在自重之外的额外负重（公斤）`,
     repsLabel: (n) => `第 ${n} 组次数`,
     rpeLabel: (n) => `第 ${n} 组 RPE（可选）`,
     markDone: (n) => `标记第 ${n} 组完成`,

@@ -15,7 +15,6 @@ import { Button, ErrorBanner, Loading, styles } from '@/components/ui';
 import { DayPicker } from '@/components/DayPicker';
 import { ExerciseNameInput } from '@/components/ExerciseNameInput';
 import { colors, fonts, radius, space } from '@/theme';
-import { WEIGHT_UNITS } from '@/lib/units';
 import { exerciseDefaults, trName } from '@/data/names';
 import { checkUnfinished } from '@/lib/unfinished';
 import { planLink } from '@/lib/planLink';
@@ -414,24 +413,10 @@ export default function PlanEditor() {
                     />
                   </View>
                 </View>
-                <View style={s.options}>
-                  <View style={s.segment} accessibilityRole="radiogroup" accessibilityLabel={`${t.editor.exerciseN(i + 1)}: ${t.editor.unit}`}>
-                    {WEIGHT_UNITS.map((u) => {
-                      const on = r.weight_unit === u;
-                      return (
-                        <Pressable
-                          key={u}
-                          onPress={() => updateRow(r.key, { weight_unit: u })}
-                          accessibilityRole="radio"
-                          accessibilityState={{ checked: on }}
-                          style={[s.segBtn, on && s.segBtnOn]}
-                        >
-                          <Text style={[s.segText, on && s.segTextOn]}>{u === 'bw' ? t.sets.bodyweight : u}</Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                  {r.weight_unit !== 'bw' ? (
+                {/* No kg / lb / BW choice here: built-in bodyweight moves start as BW, and the unit
+                    is switched while logging (the KG ⇄ button), which updates the plan. */}
+                {r.weight_unit !== 'bw' ? (
+                  <View style={s.options}>
                     <Pressable
                       onPress={() => updateRow(r.key, { per_side: !r.per_side })}
                       accessibilityRole="checkbox"
@@ -443,8 +428,8 @@ export default function PlanEditor() {
                       <Ionicons name={r.per_side ? 'checkbox' : 'square-outline'} size={16} color={r.per_side ? colors.lime : colors.muted} />
                       <Text style={[s.segText, r.per_side && s.segTextOn]}>{t.editor.perHand}</Text>
                     </Pressable>
-                  ) : null}
-                </View>
+                  </View>
+                ) : null}
                 {rowErrors[r.key] ? (
                   <Text role="alert" style={[styles.errorText, { paddingLeft: 36 }]}>
                     {rowErrors[r.key]}

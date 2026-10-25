@@ -27,6 +27,10 @@ const STANDARDS: Record<string, Record<Gender, [number, number, number, number, 
   'Barbell Hip Thrust': { M: [0.75, 1.25, 1.75, 2.5, 3.25], F: [0.5, 1, 1.5, 2.25, 3] },
 };
 
+// "Squat" and "Bench Press" are what most people call the barbell lifts.
+STANDARDS.Squat = STANDARDS['Back Squat'];
+STANDARDS['Bench Press'] = STANDARDS['Barbell Bench Press'];
+
 export const hasStandard = (exercise: string) => exercise in STANDARDS;
 
 export interface StrengthRank {
