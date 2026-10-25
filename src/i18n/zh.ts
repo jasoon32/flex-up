@@ -122,7 +122,7 @@ export const zh: Strings = {
     tip: '提示：长按组号可删除该组。',
     deleteWorkout: '删除训练',
     deleteWorkoutQ: '删除这次训练？',
-    deleteWorkoutMsg: '这会从历史中永久删除。',
+    deleteWorkoutMsg: '将从历史记录中移除。几秒内可以撤销。',
     deleteSetQ: '删除这一组？',
     couldntSaveSet: '无法保存这一组',
     couldntDeleteSet: '无法删除这一组',
@@ -391,6 +391,12 @@ export const zh: Strings = {
     defaultRestHint: '计划中没有设置休息时间的动作会使用这个时间。',
     showRpe: '显示 RPE 列',
     showRpeHint: '为每组的吃力程度打分，1–10。',
+  },
+  undo: {
+    undo: '撤销',
+    workoutDeleted: '已删除训练',
+    workoutDiscarded: '已放弃训练',
+    couldntRestore: '无法恢复这次训练',
   },
   validation: {
     required: (label) => `请填写${label}。`,

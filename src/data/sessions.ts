@@ -387,6 +387,42 @@ export async function reopenSession(id: string): Promise<void> {
   check(await supabase.from('workout_sessions').update({ completed_at: null }).eq('id', id));
 }
 
+/**
+ * Puts a deleted workout back exactly as it was (same id, times, notes and sets), for Undo.
+ * If its plan has been deleted since, the workout comes back without a plan, like history does.
+ */
+export async function restoreSession(snapshot: SessionWithSets): Promise<void> {
+  const row = {
+    id: snapshot.id,
+    plan_name: snapshot.plan_name,
+    started_at: snapshot.started_at,
+    completed_at: snapshot.completed_at,
+    notes: snapshot.notes,
+  };
+  let res = await supabase.from('workout_sessions').insert({ ...row, plan_id: snapshot.plan_id });
+  if (res.error && snapshot.plan_id) res = await supabase.from('workout_sessions').insert({ ...row, plan_id: null });
+  check(res);
+  if (snapshot.sets.length > 0) {
+    check(
+      await supabase.from('session_sets').insert(
+        snapshot.sets.map((x) => ({
+          id: x.id,
+          session_id: snapshot.id,
+          exercise_name: x.exercise_name,
+          exercise_order: x.exercise_order,
+          set_number: x.set_number,
+          reps: x.reps,
+          weight: x.weight,
+          rpe: x.rpe,
+          completed: x.completed,
+          weight_unit: x.weight_unit,
+          per_side: x.per_side,
+        })),
+      ),
+    );
+  }
+}
+
 export async function deleteSession(id: string): Promise<void> {
   check(await supabase.from('workout_sessions').delete().eq('id', id));
   dropSnapshot(id);

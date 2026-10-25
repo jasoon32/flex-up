@@ -126,7 +126,7 @@ export const en = {
     tip: 'Tip: long-press a set number to delete that set.',
     deleteWorkout: 'Delete workout',
     deleteWorkoutQ: 'Delete this workout?',
-    deleteWorkoutMsg: 'This permanently removes it from your history.',
+    deleteWorkoutMsg: 'This removes it from your history. You can undo it for a few seconds.',
     deleteSetQ: 'Delete this set?',
     couldntSaveSet: 'Couldn’t save set',
     couldntDeleteSet: 'Couldn’t delete set',
@@ -402,6 +402,12 @@ export const en = {
     defaultRestHint: 'Used for exercises without their own rest time in the plan.',
     showRpe: 'Show RPE column',
     showRpeHint: 'Rate how hard each set felt, 1–10.',
+  },
+  undo: {
+    undo: 'Undo',
+    workoutDeleted: 'Workout deleted',
+    workoutDiscarded: 'Workout discarded',
+    couldntRestore: 'Couldn’t restore the workout',
   },
   validation: {
     required: (label: string) => `${label} is required.`,
