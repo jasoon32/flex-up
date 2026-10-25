@@ -1,6 +1,6 @@
 {
-  "name": "Flex Up",
-  "short_name": "Flex Up",
+  "name": "Flex Up Next",
+  "short_name": "Flex Next",
   "description": "Log every set, beat your PBs and share your workouts.",
   "start_url": "/?v=4",
   "scope": "/",
