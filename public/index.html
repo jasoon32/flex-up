@@ -60,13 +60,25 @@
       // After rotating, iPhone can leave a home-screen web app scrolled or zoomed so it looks
       // frozen. The app never scrolls the page itself (everything scrolls inside #root), so snap
       // the page back to the top-left once the rotation or resize settles.
+      // The safe-area insets are measured on "resize", which iPhone fires mid-rotation while the
+      // page is still offset; that left a big gap at the top and the tab bar over the home
+      // indicator. A second "resize" once things have settled makes them be measured again.
       (function () {
-        var t;
+        var t, again, ours = false;
         function settle() {
+          if (ours) return;
           clearTimeout(t);
+          clearTimeout(again);
           t = setTimeout(function () {
             if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+            remeasure();
           }, 150);
+          again = setTimeout(remeasure, 700);
+        }
+        function remeasure() {
+          ours = true;
+          window.dispatchEvent(new Event('resize'));
+          ours = false;
         }
         window.addEventListener('orientationchange', settle);
         window.addEventListener('resize', settle);
