@@ -328,6 +328,7 @@ export const en = {
     done: 'Done',
     setN: (n: number) => `Set ${n}`,
     weightLabel: (n: number, unit: string) => `Set ${n} weight in ${unit}`,
+    addedWeightLabel: (n: number) => `Set ${n}: extra weight on top of bodyweight, in kg`,
     repsLabel: (n: number) => `Set ${n} reps`,
     rpeLabel: (n: number) => `Set ${n} RPE, optional`,
     markDone: (n: number) => `Mark set ${n} done`,

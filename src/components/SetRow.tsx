@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Alert } from '@/lib/alert';
 import { Ionicons } from '@expo/vector-icons';
@@ -62,6 +62,8 @@ export function SetRow({ index, set, unit, last, active, showRpe, onActivate, on
       return next;
     });
   }
+
+  const bwInput = useRef<ComponentRef<typeof TextInput>>(null);
 
   const flush = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
@@ -152,13 +154,48 @@ export function SetRow({ index, set, unit, last, active, showRpe, onActivate, on
     <View style={s.stepper}>
       <StepButton icon="remove" label={L.decrease(label)} onPress={() => step(field, -1)} />
       <Text style={s.stepLabel} numberOfLines={1}>
-        {field === 'weight' ? `${STEP.weight} ${shown}` : label}
+        {field === 'weight' ? (unit === 'bw' ? `+${STEP.weight} kg` : `${STEP.weight} ${shown}`) : label}
       </Text>
       <StepButton icon="add" label={L.increase(label)} onPress={() => step(field, 1)} />
     </View>
   );
 
   const showSteppers = active && !set.completed;
+  const weightLabel = unit === 'bw' ? L.addedWeightLabel(n) : L.weightLabel(n, shown);
+
+  // Bodyweight moves: "BW" is fixed text, and the box beside "+" takes only extra weight in kg,
+  // so nobody types their bodyweight in as a number. A done set with nothing added reads "BW".
+  const bodyweightCell = (
+    <Pressable
+      onPress={() => bwInput.current?.focus()}
+      accessible={false}
+      style={[s.bwCell, set.completed && s.inputDone]}
+    >
+      <Text style={s.bwText} numberOfLines={1}>
+        {tr.units.bodyweight}
+      </Text>
+      {set.completed && !set.weight ? null : (
+        <>
+          <Text style={s.bwPlus}>+</Text>
+          <TextInput
+            ref={bwInput}
+            value={text.weight}
+            onChangeText={(v) => setText((t) => ({ ...t, weight: v }))}
+            onBlur={() => commit('weight')}
+            placeholder="0"
+            placeholderTextColor={colors.faint}
+            keyboardType="decimal-pad"
+            selectTextOnFocus
+            returnKeyType="done"
+            editable={!set.completed}
+            accessibilityLabel={weightLabel}
+            style={[s.bwInput, set.completed && { backgroundColor: 'transparent' }]}
+          />
+          <Text style={s.bwUnit}>kg</Text>
+        </>
+      )}
+    </Pressable>
+  );
   return (
     <View style={[s.wrap, active && s.wrapActive]}>
       <View style={[s.row, set.completed && s.rowDone]}>
@@ -175,7 +212,7 @@ export function SetRow({ index, set, unit, last, active, showRpe, onActivate, on
         <Text style={s.last} numberOfLines={1}>
           {last || '—'}
         </Text>
-        {input('weight', 'decimal-pad', L.weightLabel(n, shown), unit === 'bw' ? tr.units.bodyweight : '')}
+        {unit === 'bw' ? bodyweightCell : input('weight', 'decimal-pad', weightLabel)}
         {input('reps', 'number-pad', L.repsLabel(n))}
         {showRpe ? input('rpe', 'decimal-pad', L.rpeLabel(n), '–') : null}
         <Pressable
@@ -191,7 +228,7 @@ export function SetRow({ index, set, unit, last, active, showRpe, onActivate, on
       {showSteppers ? (
         <>
           <View style={s.steppers}>
-            {stepper('weight', L.weightLabel(n, shown))}
+            {stepper('weight', weightLabel)}
             {stepper('reps', L.reps)}
           </View>
           <View style={s.stepSizes} accessibilityRole="radiogroup" accessibilityLabel={L.stepSize}>
@@ -300,6 +337,34 @@ const s = StyleSheet.create({
     padding: 0,
   },
   inputDone: { backgroundColor: 'transparent', borderColor: 'transparent' },
+  bwCell: {
+    flex: 1,
+    minWidth: 0,
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.field,
+    backgroundColor: colors.card,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  bwText: { fontSize: 13, fontFamily: fonts.bold, color: colors.text },
+  bwPlus: { fontSize: 13, fontFamily: fonts.semibold, color: colors.muted, marginHorizontal: 2 },
+  bwInput: {
+    width: 36,
+    minWidth: 0,
+    height: 34,
+    padding: 0,
+    textAlign: 'center',
+    fontSize: 15,
+    fontFamily: fonts.semibold,
+    color: colors.text,
+    backgroundColor: colors.bg,
+    borderRadius: 6,
+  },
+  bwUnit: { fontSize: 11, fontFamily: fonts.semibold, color: colors.muted, marginLeft: 2 },
   check: {
     width: 44,
     height: 44,

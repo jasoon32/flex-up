@@ -8,6 +8,7 @@ import type { WeightUnit } from '@/lib/types';
  */
 export const EXERCISE_NAMES: Record<string, string> = {
   // Chest
+  'Bench Press': '卧推',
   'Barbell Bench Press': '杠铃卧推',
   'Incline Barbell Bench Press': '上斜杠铃卧推',
   'Decline Barbell Bench Press': '下斜杠铃卧推',
@@ -86,6 +87,7 @@ export const EXERCISE_NAMES: Record<string, string> = {
   'Upright Row': '直立划船',
   'Landmine Press': '地雷管推举',
   // Biceps
+  'Bicep Curl': '二头弯举',
   'Barbell Curl': '杠铃弯举',
   'EZ-Bar Curl': '曲杆弯举',
   'DB Bicep Curl': '哑铃二头弯举',
@@ -116,6 +118,7 @@ export const EXERCISE_NAMES: Record<string, string> = {
   'Machine Triceps Extension': '器械三头伸展',
   'JM Press': 'JM推',
   // Legs
+  Squat: '深蹲',
   'Back Squat': '杠铃深蹲',
   'Front Squat': '前蹲',
   'Smith Machine Squat': '史密斯深蹲',
@@ -129,6 +132,7 @@ export const EXERCISE_NAMES: Record<string, string> = {
   'Single-Leg Leg Press': '单腿腿举',
   'Bulgarian Split Squat': '保加利亚分腿蹲',
   'Split Squat': '分腿蹲',
+  Lunge: '箭步蹲',
   'Walking Lunge': '行走箭步蹲',
   'Reverse Lunge': '后撤箭步蹲',
   'Dumbbell Lunge': '哑铃箭步蹲',
@@ -330,9 +334,16 @@ export function nameIn(name: string, lang: Lang, kind: NameKind = 'exercise'): s
 /** `nameIn` for the current language. Screens using `useI18n` re-render when it changes. */
 export const trName = (name: string, kind: NameKind = 'exercise') => nameIn(name, currentLang(), kind);
 
-/** What to save for text shown or typed in a name field: a built-in Chinese name maps back to its English key. */
+/**
+ * What to save for text shown or typed in a name field: a built-in Chinese name maps back to its
+ * English key, and a built-in English name typed in any case ("squat") becomes that built-in
+ * ("Squat"), so it translates and gets its defaults.
+ */
 export function toSaved(text: string, kind: NameKind = 'exercise'): string {
   const t = text.trim();
   for (const [en, zh] of Object.entries(LISTS[kind])) if (zh === t) return en;
+  // Exact text only: "squat " (still typing) stays as it is.
+  const lower = text.toLowerCase();
+  for (const en of Object.keys(LISTS[kind])) if (en.toLowerCase() === lower) return en;
   return text;
 }
