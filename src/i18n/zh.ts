@@ -156,8 +156,6 @@ export const zh: Strings = {
     streakLabel: '连续天数',
     prLine: (value, previous) => `${value}（之前 ${previous}）`,
     prMatched: (value) => `${value}（追平）`,
-    pbBroken: (n) => `打破 ${n} 项纪录`,
-    pbMatched: (n) => `追平 ${n} 项纪录`,
     reps: (n) => `${n} 次`,
     share: '分享训练',
     done: '完成',

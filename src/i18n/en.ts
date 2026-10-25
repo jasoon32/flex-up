@@ -166,8 +166,6 @@ export const en = {
     streakLabel: 'day streak',
     prLine: (value: string, previous: string) => `${value} (was ${previous})`,
     prMatched: (value: string) => `${value} (matched)`,
-    pbBroken: (n: number) => (n === 1 ? '1 record broken' : `${n} records broken`),
-    pbMatched: (n: number) => (n === 1 ? '1 record matched' : `${n} records matched`),
     reps: (n: number) => `${n} reps`,
     share: 'Share workout',
     done: 'Done',

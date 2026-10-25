@@ -10,7 +10,7 @@ import type { DayOfWeek, ExerciseGroup, SessionSet, SessionWithSets } from '@/li
 
 /**
  * A best on an exercise: heaviest weight, or most reps when it's done without weight.
- * `matched` means it tied the previous best (flame) rather than beating it (trophy).
+ * `matched` means it tied the previous best (🔥) rather than beating it (🏆).
  */
 export interface PersonalRecord {
   exercise: string;
@@ -27,6 +27,9 @@ export interface Best {
   weight: number;
   reps: number;
 }
+
+export const PB_BROKEN = '🏆';
+export const PB_MATCHED = '🔥';
 
 /** How an exercise's completed sets compare with its best before this workout. First-timers never count. */
 export function comparePb(exercise: string, sets: SessionSet[], before: Best | undefined): PersonalRecord | null {
@@ -47,6 +50,14 @@ export function comparePb(exercise: string, sets: SessionSet[], before: Best | u
     return { exercise, kind: 'reps', value: topReps, previous: before.reps, matched: topReps === before.reps };
   }
   return null;
+}
+
+/** "🏆🏆🔥" — one emoji per record, broken first; long runs collapse to "🏆×12". */
+export function pbRow(prs: PersonalRecord[]): string {
+  const broken = prs.filter((p) => !p.matched).length;
+  const matched = prs.length - broken;
+  const part = (n: number, e: string) => (n === 0 ? '' : n > 6 ? `${e}×${n}` : e.repeat(n));
+  return [part(broken, PB_BROKEN), part(matched, PB_MATCHED)].filter(Boolean).join(' ');
 }
 
 /** Bests per exercise across the given finished workouts. */
@@ -70,7 +81,7 @@ export async function getBests(names: string[], sessionIds: string[]): Promise<M
   return best;
 }
 
-/** Bests from every workout finished before `beforeIso`, for live trophies and flames while logging. */
+/** Bests from every workout finished before `beforeIso`, for live 🏆/🔥 while logging. */
 export async function getBestsBefore(names: string[], beforeIso: string): Promise<Map<string, Best>> {
   const earlier = must(
     await supabase
@@ -108,7 +119,7 @@ export interface WorkoutRecap {
   streakDays: number;
   /** Planned days of this workout's week, and which of them have a finished workout. */
   week: { day: DayOfWeek; planned: boolean; done: boolean }[];
-  /** Records broken (trophy) first, then matched (flame); at most one per exercise. */
+  /** Records broken (🏆) first, then matched (🔥); at most one per exercise. */
   prs: PersonalRecord[];
   /** The headline achievement, if any; drives the big celebration. */
   milestone: Milestone | null;

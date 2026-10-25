@@ -1,13 +1,12 @@
 import type { ReactNode } from 'react';
 import { Image, StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { formatPr, type WorkoutRecap } from '@/data/achievements';
-import { locale, strings, useI18n } from '@/i18n';
+import { formatPr, pbRow, PB_BROKEN, PB_MATCHED, type WorkoutRecap } from '@/data/achievements';
+import { locale, useI18n } from '@/i18n';
 import type { CharacterLook } from '@/lib/character';
 import { FRAME_COUNT, isHeavy, poseFor } from '@/lib/poses';
 import type { SessionSet } from '@/lib/types';
 import { AnimatedLifter } from '@/components/AnimatedLifter';
-import { pbIcon, PbIcons, PixelIcon } from '@/components/PixelBadge';
 import { toKg } from '@/lib/units';
 import { colors, fonts, WEIGHT_UNIT } from '@/theme';
 import { trName } from '@/data/names';
@@ -66,52 +65,34 @@ function Brand({ color, k, transparent }: { color: string; k: number; transparen
   );
 }
 
-/** The streak's pixel lightning bolt flickers between two colours. */
+/** The streak's lightning bolt flickers between two sizes and colours. */
 function Bolt({ frame, k }: { frame: number | null; k: number }) {
   const hot = frame !== null && frame % 2 === 1;
-  const color = hot ? '#F7E07A' : colors.lime;
-  return <PixelIcon name="bolt" size={16 * k} color={color} accent={color} />;
+  return <Ionicons name="flash" size={(hot ? 17 : 15) * k} color={hot ? '#F7E07A' : colors.lime} />;
 }
 
-/** Pixel trophies and flames for the records broken and matched; nothing when there are none. */
+/** 🏆🏆🔥 for the records broken and matched; nothing when there are none. */
 function PbRow({ recap, k, size = 22, transparent }: { recap: WorkoutRecap; k: number; size?: number; transparent?: boolean }) {
-  return (
-    <PbIcons
-      prs={recap.prs}
-      size={size * k}
-      gap={3 * k}
-      color={colors.onInk}
-      accent={colors.lime}
-      countStyle={outline(transparent, k) ?? undefined}
-    />
-  );
+  const row = pbRow(recap.prs);
+  if (!row) return null;
+  return <Text style={[{ fontSize: size * k, letterSpacing: 2 * k }, outline(transparent, k)]}>{row}</Text>;
 }
 
-/** "trophy ×2   flame ×1": how many records were broken and matched in the workout; nothing when there are none. */
+/** "🏆 ×2   🔥 ×1": how many records were broken and matched in the workout; nothing when there are none. */
 function PbCount({ recap, k, transparent }: { recap: WorkoutRecap; k: number; transparent?: boolean }) {
   const broken = recap.prs.filter((p) => !p.matched).length;
   const matched = recap.prs.length - broken;
-  if (broken + matched === 0) return null;
-  const ink = transparent ? colors.onInk : colors.ink;
-  const text = [{ fontSize: 22 * k, fontFamily: fonts.bold, color: ink }, outline(transparent, k)];
-  const S = strings().celebrate;
-  const label = [broken ? S.pbBroken(broken) : '', matched ? S.pbMatched(matched) : ''].filter(Boolean).join(', ');
+  const parts = [broken ? `${PB_BROKEN} ×${broken}` : '', matched ? `${PB_MATCHED} ×${matched}` : ''].filter(Boolean);
+  if (parts.length === 0) return null;
   return (
-    <View accessible accessibilityLabel={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 18 * k }}>
-      {(
-        [
-          ['trophy', broken],
-          ['flame', matched],
-        ] as const
-      ).map(([name, n]) =>
-        n ? (
-          <View key={name} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 * k }}>
-            <PixelIcon name={name} size={24 * k} color={ink} accent={colors.lime} />
-            <Text style={text}>{`×${n}`}</Text>
-          </View>
-        ) : null,
-      )}
-    </View>
+    <Text
+      style={[
+        { fontSize: 22 * k, fontFamily: fonts.bold, color: transparent ? colors.onInk : colors.ink },
+        outline(transparent, k),
+      ]}
+    >
+      {parts.join('   ')}
+    </Text>
   );
 }
 
@@ -279,9 +260,8 @@ export function StatsCard({ recap, width, frame, transparent }: CardProps) {
               {pr ? (
                 <>
                   {/* Broken PBs shimmer through the rainbow, matched ones burn red to yellow. */}
-                  <PixelIcon name={pbIcon(pr)} size={16 * k} color={colors.onInk} accent={colors.lime} />
                   <FxText
-                    text={trName(g.name)}
+                    text={`${pr.matched ? PB_MATCHED : PB_BROKEN} ${trName(g.name)}`}
                     fx={pr.matched ? 'fire' : 'rainbow'}
                     frame={frame}
                     style={{ flex: 1, ...rowText }}
@@ -373,14 +353,15 @@ export function PhotoCard({ recap, width, frame, photo }: CardProps & { photo: s
 }
 
 /**
- * A small square for WeChat-style stickers: the lifter doing the rep, the streak (bolt) top left
- * and the PBs (trophy broken, flame matched) top right. The PB badge turns lime and pops at the top of
+ * A small square for WeChat-style stickers: the lifter doing the rep, the streak (⚡) top left
+ * and the PBs (🏆 broken, 🔥 matched) top right. The PB badge turns lime and pops at the top of
  * every rep; badges only appear when there's something to show.
  */
 export function StickerCard({ recap, look, width, frame, transparent }: CardProps) {
   const { t } = useI18n();
   const k = width / 240;
   const pose = poseOf(recap);
+  const row = pbRow(recap.prs);
   const broken = recap.prs.some((p) => !p.matched);
   const streak = recap.streakDays >= 2 ? recap.streakDays : 0;
   const peak = frame !== null && frame % FRAME_COUNT === PEAK;
@@ -415,9 +396,9 @@ export function StickerCard({ recap, look, width, frame, transparent }: CardProp
         ) : (
           <View />
         )}
-        {recap.prs.length > 0 ? (
+        {row ? (
           <View style={[pill, broken && { backgroundColor: colors.lime }, { transform: [{ scale: peak ? 1.15 : 1 }] }]}>
-            <PbIcons prs={recap.prs} size={16 * k} gap={2 * k} color={broken ? colors.ink : colors.onInk} accent={colors.lime} />
+            <Text style={{ fontSize: 15 * k, letterSpacing: 1 * k }}>{row}</Text>
           </View>
         ) : null}
       </View>
