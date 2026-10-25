@@ -1,9 +1,9 @@
 import { supabase } from '@/lib/supabase';
 import { check, must } from '@/lib/errors';
 import { strings } from '@/i18n';
-import { asUnit, convertWeight, setVolumeKg } from '@/lib/units';
+import { asSetType, asUnit, convertWeight, setVolumeKg } from '@/lib/units';
 import { exerciseDefaults } from './names';
-import { getPlan } from './plans';
+import { getPlan, savePlan } from './plans';
 import type {
   ExerciseGroup,
   HistoryItem,
@@ -30,6 +30,7 @@ function mapSet(row: any): SessionSet {
     completed: !!row.completed,
     weight_unit: asUnit(row.weight_unit),
     per_side: !!row.per_side,
+    set_type: asSetType(row.set_type),
   };
 }
 
@@ -96,7 +97,9 @@ export async function getLastSets(names: string[], before?: string): Promise<Map
         sessions.map((s) => s.id),
       )
       .in('exercise_name', names)
-      .eq('completed', true),
+      .eq('completed', true)
+      // "Last time" means the working sets; warm-ups would shift every row.
+      .neq('set_type', 'warmup'),
   ) as any[];
 
   const rank = new Map(sessions.map((s, i) => [s.id, i]));
@@ -374,6 +377,77 @@ export async function addSessionExercise(sessionId: string, name: string, order:
       .single(),
   );
   return mapSet(row);
+}
+
+/**
+ * Puts warm-up sets in front of an exercise's working sets: the working sets move down to
+ * make room, and the warm-ups start unticked with the suggested weights and reps.
+ */
+export async function addWarmups(
+  sessionId: string,
+  group: ExerciseGroup,
+  warmups: { weight: number; reps: number }[],
+): Promise<SessionSet[]> {
+  const k = warmups.length;
+  const first = group.sets[0];
+  const moved = group.sets.map((s) => ({ ...s, set_number: s.set_number + k }));
+  const results = await Promise.all(
+    moved.map((s) => supabase.from('session_sets').update({ set_number: s.set_number }).eq('id', s.id)),
+  );
+  results.forEach(check);
+  const rows = must(
+    await supabase
+      .from('session_sets')
+      .insert(
+        warmups.map((w, i) => ({
+          session_id: sessionId,
+          exercise_name: group.name,
+          exercise_order: group.order,
+          set_number: i + 1,
+          reps: w.reps,
+          weight: w.weight,
+          weight_unit: first?.weight_unit ?? 'kg',
+          per_side: first?.per_side ?? false,
+          set_type: 'warmup',
+        })),
+      )
+      .select(),
+  ) as any[];
+  return [...rows.map(mapSet), ...moved];
+}
+
+/** An empty workout for today that isn't tied to a plan; exercises are added as you go. */
+export async function startQuickSession(): Promise<string> {
+  const row = must(
+    await supabase.from('workout_sessions').insert({ plan_id: null, plan_name: 'Quick Workout' }).select('id').single(),
+  ) as { id: string };
+  return row.id;
+}
+
+/**
+ * Turns a plan-less workout into a plan with the same exercises, set counts and rep range,
+ * and links the workout to it. Returns the new plan's id.
+ */
+export async function saveSessionAsPlan(session: SessionWithSets): Promise<string> {
+  const exercises = groupSets(session.sets).map((g) => {
+    const working = g.sets.filter((s) => s.set_type !== 'warmup');
+    const reps = working.map((s) => s.reps ?? 0).filter((r) => r > 0);
+    const min = reps.length ? Math.min(...reps) : 10;
+    const max = reps.length ? Math.max(...reps) : 10;
+    return {
+      name: g.name,
+      target_sets: Math.max(1, Math.min(20, working.length)),
+      target_reps: Math.max(1, Math.min(100, min)),
+      target_reps_max: max > min ? Math.min(100, max) : null,
+      target_weight: null,
+      rest_seconds: null,
+      weight_unit: g.sets[0]?.weight_unit ?? 'kg',
+      per_side: g.sets[0]?.per_side ?? false,
+    };
+  });
+  const planId = await savePlan(null, { name: session.plan_name, days: [], exercises });
+  check(await supabase.from('workout_sessions').update({ plan_id: planId }).eq('id', session.id));
+  return planId;
 }
 
 /** Marks a session finished. Unticked sets stay so the workout can be reopened and completed later. */

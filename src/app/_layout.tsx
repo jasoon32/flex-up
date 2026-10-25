@@ -90,6 +90,10 @@ function RootNavigator() {
           options={{ headerShown: false, presentation: 'fullScreenModal', animation: 'fade' }}
         />
         <Stack.Screen name="share/[id]" options={{ title: t.share.title }} />
+        {/* The exercise screen sets its own title (the exercise's name). */}
+        <Stack.Screen name="exercise/[name]" options={{ title: '' }} />
+        <Stack.Screen name="programs" options={{ title: t.programs.title }} />
+        <Stack.Screen name="import-plan" options={{ title: t.planShare.importTitle }} />
       </Stack.Protected>
       <Stack.Protected guard={!session}>
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />

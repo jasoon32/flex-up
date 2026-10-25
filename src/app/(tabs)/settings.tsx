@@ -10,11 +10,27 @@ import { LANGUAGES, useI18n } from '@/i18n';
 import { useAuth } from '@/providers/AuthProvider';
 import { Button, Eyebrow, styles } from '@/components/ui';
 import { colors, fonts, radius, space } from '@/theme';
+import { exportWorkoutsCsv } from '@/lib/exportCsv';
+import { useState } from 'react';
 
 export default function Settings() {
   const { t, lang, setLang } = useI18n();
   const { session } = useAuth();
   const prefs = usePrefs();
+  const [exporting, setExporting] = useState(false);
+
+  const exportCsv = async () => {
+    setExporting(true);
+    try {
+      const result = await exportWorkoutsCsv(t.settings.exportTitle);
+      if (result === 'downloaded') Alert.alert(t.settings.exported, t.settings.exportedMsg);
+    } catch (e) {
+      // Closing the share sheet throws an AbortError: not a failure.
+      if (!(e instanceof Error && e.name === 'AbortError')) Alert.alert(t.settings.couldntExport, errorMessage(e));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const signOut = () =>
     Alert.alert(t.settings.signOutQ, undefined, [
@@ -125,6 +141,23 @@ export default function Settings() {
             <Button title={t.settings.signOut} variant="secondary" onPress={signOut} />
           </View>
           <Button title={t.settings.deleteAccount} variant="danger" onPress={deleteAccount} />
+        </View>
+
+        <View style={{ gap: 10 }}>
+          <Eyebrow>{t.settings.data}</Eyebrow>
+          <View style={[s.group, { padding: space.lg, gap: space.md }]}>
+            <View style={{ gap: 2 }}>
+              <Text style={s.optionText}>{t.settings.exportCsv}</Text>
+              <Text style={styles.small}>{t.settings.exportHint}</Text>
+            </View>
+            <Button
+              title={exporting ? t.settings.exporting : t.settings.exportCsv}
+              variant="secondary"
+              icon={<Ionicons name="download-outline" size={18} color={colors.ink} />}
+              onPress={exportCsv}
+              loading={exporting}
+            />
+          </View>
         </View>
 
         <View style={{ gap: 10 }}>

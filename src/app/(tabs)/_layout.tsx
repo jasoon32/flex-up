@@ -35,15 +35,17 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" options={{ title: t.tabs.home, tabBarIcon: icon('home-outline', 'home') }} />
       <Tabs.Screen name="plans" options={{ title: t.tabs.plans, tabBarIcon: icon('list-outline', 'list') }} />
+      <Tabs.Screen
+        name="progress"
+        options={{ title: t.tabs.progress, tabBarIcon: icon('stats-chart-outline', 'stats-chart') }}
+      />
       <Tabs.Screen name="history" options={{ title: t.tabs.history, tabBarIcon: icon('time-outline', 'time') }} />
       <Tabs.Screen
         name="character"
         options={{ title: t.tabs.character, tabBarIcon: icon('happy-outline', 'happy') }}
       />
-      <Tabs.Screen
-        name="settings"
-        options={{ title: t.tabs.settings, tabBarIcon: icon('settings-outline', 'settings') }}
-      />
+      {/* Five tabs fit a phone; Settings opens from the gear on Character and the account button on Home. */}
+      <Tabs.Screen name="settings" options={{ title: t.tabs.settings, href: null }} />
     </Tabs>
   );
 }

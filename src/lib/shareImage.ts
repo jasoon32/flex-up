@@ -52,7 +52,7 @@ async function captureWebPng(el: HTMLElement, size?: { width: number; height: nu
 }
 
 /** Opens the share sheet for a file; on the web, the browser's share sheet or a download. */
-async function shareBytes(bytes: Uint8Array, name: string, mimeType: string, uti: string, title: string): Promise<ShareResult> {
+export async function shareBytes(bytes: Uint8Array, name: string, mimeType: string, uti: string, title: string): Promise<ShareResult> {
   if (Platform.OS === 'web') {
     const file = new globalThis.File([bytes as BlobPart], name, { type: mimeType });
     if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {

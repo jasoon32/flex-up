@@ -11,6 +11,8 @@ import { setPrefs, usePrefs } from '@/lib/prefs';
 
 interface Props {
   index: number;
+  /** What the set-number button shows: "1", "W" for a warm-up, "2D" for a drop set. Defaults to index + 1. */
+  label?: string;
   set: SessionSet;
   /** The exercise's unit; 'bw' allows a blank weight (bodyweight). */
   unit: WeightUnit;
@@ -33,7 +35,7 @@ const parsers: Record<Field, (t: string) => Parsed> = { weight: parseWeight, rep
 const STEP_SAVE_MS = 600;
 
 /** One editable set. Fields save when they lose focus; ticking done also saves anything still being typed. */
-export function SetRow({ index, set, unit, last, active, showRpe, onActivate, onChange, onDelete, onError }: Props) {
+export function SetRow({ index, label, set, unit, last, active, showRpe, onActivate, onChange, onDelete, onError }: Props) {
   const { t: tr } = useI18n();
   const L = tr.sets;
   const prefs = usePrefs();
@@ -170,7 +172,9 @@ export function SetRow({ index, set, unit, last, active, showRpe, onActivate, on
           accessibilityHint={L.deleteHint}
           style={s.num}
         >
-          <Text style={s.numText}>{index + 1}</Text>
+          <Text style={[s.numText, set.set_type !== 'normal' && s.numTagged]} numberOfLines={1} adjustsFontSizeToFit>
+            {label ?? index + 1}
+          </Text>
         </Pressable>
         <Text style={s.last} numberOfLines={1}>
           {last || '—'}
@@ -274,6 +278,7 @@ const s = StyleSheet.create({
   rowDone: { backgroundColor: colors.limeSoft },
   num: { width: 26, height: 40, alignItems: 'center', justifyContent: 'center' },
   numText: { fontSize: 14, fontFamily: fonts.bold, color: colors.text },
+  numTagged: { fontSize: 12, color: colors.warn },
   last: { width: 56, fontSize: 12, fontFamily: fonts.regular, color: colors.muted },
   head: {
     fontSize: 11,

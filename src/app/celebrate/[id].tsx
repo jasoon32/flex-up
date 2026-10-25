@@ -15,10 +15,13 @@ import {
 } from '@/data/achievements';
 import { locale, useI18n, type Strings } from '@/i18n';
 import { errorMessage } from '@/lib/errors';
-import { readLook } from '@/lib/character';
+import { CATALOG, lookWith, readLook, type ItemId } from '@/lib/character';
+import { unlocksAt, type LevelInfo } from '@/lib/levels';
+import { levelChange } from '@/data/progress';
+import { PixelCharacter } from '@/components/PixelCharacter';
 import { isHeavy, poseFor } from '@/lib/poses';
 import { useAuth } from '@/providers/AuthProvider';
-import { Button, ErrorBanner, Loading } from '@/components/ui';
+import { Button, ErrorBanner, Loading, styles } from '@/components/ui';
 import { Confetti } from '@/components/Confetti';
 import { AnimatedLifter, useRepFrame } from '@/components/AnimatedLifter';
 import { colors, fonts, radius, space } from '@/theme';
@@ -45,10 +48,15 @@ export default function Celebrate() {
   const look = readLook(session?.user);
   const [recap, setRecap] = useState<WorkoutRecap | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [levels, setLevels] = useState<{ before: LevelInfo; after: LevelInfo } | null>(null);
   const frame = useRepFrame();
 
   useEffect(() => {
     let active = true;
+    // XP is a bonus on top of the recap: if it can't load, the celebration still shows.
+    levelChange(id)
+      .then((l) => active && setLevels(l))
+      .catch(() => {});
     getWorkoutRecap(id)
       .then((r) => {
         if (!active) return;
@@ -107,6 +115,8 @@ export default function Celebrate() {
             <Stat value={`⚡${recap.streakDays}`} label={C.streakLabel} />
           </View>
 
+          {levels ? <LevelBox before={levels.before} after={levels.after} look={look} /> : null}
+
           {recap.prs.length > 0 ? (
             <View style={s.prs}>
               <Text style={s.pbRow}>{pbRow(recap.prs)}</Text>
@@ -158,6 +168,47 @@ export default function Celebrate() {
   );
 }
 
+/** XP from this workout, the bar toward the next level, and any level-up with its new gym-wear. */
+function LevelBox({ before, after, look }: { before: LevelInfo; after: LevelInfo; look: ReturnType<typeof readLook> }) {
+  const { t } = useI18n();
+  const L = t.levelUp;
+  const gained = after.xp - before.xp;
+  const up = after.level > before.level;
+  const unlocked: ItemId[] = [];
+  for (let l = before.level + 1; l <= after.level; l++) unlocked.push(...unlocksAt(l));
+  const slotOf = (id: ItemId) => CATALOG.find((c) => c.items.includes(id))!.slot;
+  return (
+    <View style={[s.level, up && s.levelUp]}>
+      <View style={[styles.between, { gap: 8 }]}>
+        <Text style={s.levelTitle}>{up ? L.title : t.progress.level(after.level)}</Text>
+        <Text style={s.levelXp}>{L.xpGained(gained.toLocaleString(locale()))}</Text>
+      </View>
+      {up ? <Text style={s.levelText}>{L.reached(after.level)}</Text> : null}
+      <View style={s.xpTrack}>
+        <View style={[s.xpFill, { width: `${Math.round((after.into / after.span) * 100)}%` }]} />
+      </View>
+      <Text style={s.levelText}>{L.toNext((after.span - after.into).toLocaleString(locale()), after.level + 1)}</Text>
+      {unlocked.length > 0 ? (
+        <View style={{ gap: 8 }}>
+          <Text style={[s.levelText, { color: colors.lime }]}>{L.unlocked}</Text>
+          <View style={s.unlocks}>
+            {unlocked.slice(0, 4).map((id) => (
+              <View key={id} style={s.unlock}>
+                <View style={s.unlockArt}>
+                  <PixelCharacter pixel={2} look={lookWith(look, slotOf(id), id)} label={t.character.items[id]} />
+                </View>
+                <Text style={s.unlockName} numberOfLines={2}>
+                  {t.character.items[id]}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 function Stat({ value, label, highlight }: { value: string; label: string; highlight?: boolean }) {
   return (
     <View style={s.stat}>
@@ -200,6 +251,25 @@ const s = StyleSheet.create({
   dotPlanned: { borderWidth: 1.5, borderColor: colors.onInkMuted },
   dotRest: { borderWidth: 1.5, borderColor: colors.inkLine, borderStyle: 'dashed' },
   actions: { paddingHorizontal: space.xl, paddingBottom: space.md, gap: 4 },
+  level: { backgroundColor: colors.inkRaised, borderRadius: radius.md, padding: space.md, gap: 8 },
+  levelUp: { borderWidth: 2, borderColor: colors.lime },
+  levelTitle: { fontFamily: fonts.display, fontSize: 20, color: colors.onInk },
+  levelXp: { fontFamily: fonts.bold, fontSize: 15, color: colors.lime },
+  levelText: { fontSize: 13, fontFamily: fonts.medium, color: colors.onInkMuted },
+  xpTrack: { height: 10, borderRadius: 5, backgroundColor: colors.inkLine, overflow: 'hidden' },
+  xpFill: { height: '100%', borderRadius: 5, backgroundColor: colors.lime },
+  unlocks: { flexDirection: 'row', gap: 8 },
+  unlock: { flex: 1, alignItems: 'center', gap: 4 },
+  unlockArt: {
+    width: '100%',
+    height: 76,
+    borderRadius: 10,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  unlockName: { fontSize: 11, fontFamily: fonts.semibold, color: colors.onInk, textAlign: 'center' },
   done: { height: 48, alignItems: 'center', justifyContent: 'center' },
   doneText: { fontSize: 15, fontFamily: fonts.semibold, color: colors.onInkMuted },
 });

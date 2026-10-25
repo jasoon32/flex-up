@@ -33,7 +33,7 @@ export const PB_MATCHED = '🔥';
 
 /** How an exercise's completed sets compare with its best before this workout. First-timers never count. */
 export function comparePb(exercise: string, sets: SessionSet[], before: Best | undefined): PersonalRecord | null {
-  const done = sets.filter((s) => s.completed);
+  const done = sets.filter((s) => s.completed && s.set_type !== 'warmup');
   if (!before || done.length === 0) return null;
   // Compare in kg so lb and kg sets rank correctly; report in the unit the set was logged in.
   const kg = (s: SessionSet) => toKg(s.weight ?? 0, s.weight_unit);
@@ -70,7 +70,8 @@ export async function getBests(names: string[], sessionIds: string[]): Promise<M
       .select('exercise_name, weight, weight_unit, reps')
       .in('session_id', sessionIds.slice(-300))
       .in('exercise_name', names)
-      .eq('completed', true),
+      .eq('completed', true)
+      .neq('set_type', 'warmup'),
   ) as { exercise_name: string; weight: number | null; weight_unit: string | null; reps: number | null }[];
   for (const r of rows) {
     const b = best.get(r.exercise_name) ?? { weight: 0, reps: 0 };

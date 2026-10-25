@@ -240,6 +240,15 @@ export const PLAN_NAMES: Record<string, string> = {
   'Upper B': '上肢 B',
   'Lower A': '下肢 A',
   'Lower B': '下肢 B',
+  'Full Body A': '全身 A',
+  'Full Body B': '全身 B',
+  'Strength A': '力量 A',
+  'Strength B': '力量 B',
+  'Glutes & Legs': '臀腿',
+  'Glutes & Hamstrings': '臀和腘绳肌',
+  'Home Full Body A': '居家全身 A',
+  'Home Full Body B': '居家全身 B',
+  'Quick Workout': '快速训练',
 };
 
 /** Built-in exercises done with bodyweight: they start as BW, so a blank weight can be ticked. */

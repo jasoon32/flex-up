@@ -1,4 +1,4 @@
-import type { SessionSet, WeightUnit } from './types';
+import type { SessionSet, SetType, WeightUnit } from './types';
 
 export const LB_TO_KG = 0.45359237;
 export const WEIGHT_UNITS: WeightUnit[] = ['kg', 'lb', 'bw'];
@@ -22,9 +22,13 @@ export function convertWeight(weight: number | null, from: WeightUnit, to: Weigh
   return Math.round(value * 10) / 10;
 }
 
-/** kg moved in one set, counting both hands on per-hand lifts. */
-export const setVolumeKg = (s: Pick<SessionSet, 'weight' | 'reps' | 'weight_unit' | 'per_side'>) =>
-  toKg(s.weight ?? 0, s.weight_unit) * (s.reps ?? 0) * (s.per_side ? 2 : 1);
+/** kg moved in one set, counting both hands on per-hand lifts. Warm-ups don't count. */
+export const setVolumeKg = (
+  s: Pick<SessionSet, 'weight' | 'reps' | 'weight_unit' | 'per_side'> & Partial<Pick<SessionSet, 'set_type'>>,
+) => (s.set_type === 'warmup' ? 0 : toKg(s.weight ?? 0, s.weight_unit) * (s.reps ?? 0) * (s.per_side ? 2 : 1));
+
+export const asSetType = (v: unknown): SetType =>
+  v === 'warmup' || v === 'drop' || v === 'failure' ? v : 'normal';
 
 /** Column header and input label: "kg", "lb", or "+kg" for added weight on bodyweight. */
 export const unitLabel = (u: WeightUnit) => (u === 'bw' ? '+kg' : u);

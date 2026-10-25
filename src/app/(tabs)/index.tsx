@@ -7,10 +7,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { formatTarget, listPlans } from '@/data/plans';
 import { deleteSession, getActiveSession, listSessionsSince, startSession } from '@/data/sessions';
 import { useFocusData } from '@/hooks/useAsync';
-import { useI18n } from '@/i18n';
+import { locale, useI18n } from '@/i18n';
 import { WEEK_ORDER, dateThisWeek, formatLongDate, isSameDay, startOfToday, startOfWeek, today } from '@/lib/days';
 import { errorMessage } from '@/lib/errors';
 import { readLook } from '@/lib/character';
+import { loadLevel } from '@/data/progress';
+import type { LevelInfo } from '@/lib/levels';
 import { useAuth } from '@/providers/AuthProvider';
 import { Badge, Button, Card, ErrorBanner, Eyebrow, Loading, styles } from '@/components/ui';
 import { PixelCharacter } from '@/components/PixelCharacter';
@@ -18,11 +20,13 @@ import { colors, fonts, radius, space } from '@/theme';
 import type { DayOfWeek, PlanWithExercises, WorkoutSession } from '@/lib/types';
 import { trName } from '@/data/names';
 import { checkUnfinished } from '@/lib/unfinished';
+import { openQuickWorkout } from '@/lib/quickWorkout';
 
 interface HomeData {
   plans: PlanWithExercises[];
   week: WorkoutSession[];
   active: WorkoutSession | null;
+  level: LevelInfo | null;
 }
 
 export default function Home() {
@@ -32,12 +36,13 @@ export default function Home() {
   const [starting, setStarting] = useState<string | null>(null);
   const [selected, setSelected] = useState<DayOfWeek>(today);
   const { data, error, loading, reload } = useFocusData<HomeData>(async () => {
-    const [plans, week, active] = await Promise.all([
+    const [plans, week, active, level] = await Promise.all([
       listPlans(),
       listSessionsSince(startOfWeek()),
       getActiveSession(),
+      loadLevel().catch(() => null),
     ]);
-    return { plans, week, active };
+    return { plans, week, active, level };
   });
 
   const dow = today();
@@ -120,6 +125,17 @@ export default function Home() {
           <View style={{ flex: 1, gap: 8 }}>
             <Eyebrow color={colors.lime}>{t.home.yourLifter}</Eyebrow>
             <Text style={s.heroTitle}>{look.name.trim() || t.character.defaultName}</Text>
+            {data?.level ? (
+              <View style={{ gap: 6 }}>
+                <Text style={s.heroLevel}>
+                  {t.progress.level(data.level.level)} ·{' '}
+                  {t.progress.xp(data.level.into.toLocaleString(locale()), data.level.span.toLocaleString(locale()))}
+                </Text>
+                <View style={s.xpTrack}>
+                  <View style={[s.xpFill, { width: `${Math.round((data.level.into / data.level.span) * 100)}%` }]} />
+                </View>
+              </View>
+            ) : null}
             <Text style={s.heroText}>{t.home.tapToCustomise}</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.onInkMuted} />
@@ -193,6 +209,17 @@ export default function Home() {
                   variant="secondary"
                   onPress={() => router.push(data?.plans.length ? '/plans' : '/plan/new')}
                 />
+                {isToday ? (
+                  <Button
+                    title={t.quick.start}
+                    variant="white"
+                    icon={<Ionicons name="flash-outline" size={18} color={colors.ink} />}
+                    onPress={openQuickWorkout}
+                  />
+                ) : null}
+                {!data?.plans.length ? (
+                  <Button title={t.programs.browse} variant="ghost" onPress={() => router.push('/programs')} />
+                ) : null}
               </Card>
             ) : (
               scheduled.map((plan) => {
@@ -354,6 +381,9 @@ const s = StyleSheet.create({
   },
   heroTitle: { fontFamily: fonts.display, fontSize: 20, lineHeight: 23, color: colors.onInk },
   heroText: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: colors.onInkMuted },
+  heroLevel: { fontFamily: fonts.semibold, fontSize: 13, color: colors.onInk },
+  xpTrack: { height: 8, borderRadius: 4, backgroundColor: colors.inkLine, overflow: 'hidden' },
+  xpFill: { height: '100%', borderRadius: 4, backgroundColor: colors.lime },
   week: { flexDirection: 'row', gap: 6 },
   day: {
     flex: 1,

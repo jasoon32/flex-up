@@ -10,6 +10,7 @@ import { DayStrip } from '@/components/DayPicker';
 import { colors, fonts, radius, space } from '@/theme';
 import type { PlanWithExercises } from '@/lib/types';
 import { trName } from '@/data/names';
+import { openQuickWorkout } from '@/lib/quickWorkout';
 
 function planMeta(p: PlanWithExercises, t: Strings): string {
   const sets = p.exercises.reduce((sum, e) => sum + e.target_sets, 0);
@@ -45,6 +46,16 @@ export default function Plans() {
               />
             </View>
             <Text style={styles.muted}>{t.plans.intro}</Text>
+            <View style={s.shortcuts}>
+              <Shortcut
+                icon="library-outline"
+                title={t.programs.browse}
+                hint={t.programs.browseHint}
+                onPress={() => router.push('/programs')}
+                dark
+              />
+              <Shortcut icon="flash-outline" title={t.quick.start} hint={t.quick.hint} onPress={openQuickWorkout} />
+            </View>
             {error ? <ErrorBanner message={error} onRetry={reload} /> : null}
           </View>
         }
@@ -71,7 +82,46 @@ export default function Plans() {
   );
 }
 
+function Shortcut({
+  icon,
+  title,
+  hint,
+  onPress,
+  dark,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  hint: string;
+  onPress: () => void;
+  dark?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityHint={hint}
+      style={({ pressed }) => [s.shortcut, dark && s.shortcutDark, pressed && { opacity: 0.8 }]}
+    >
+      <Ionicons name={icon} size={22} color={dark ? colors.lime : colors.ink} />
+      <Text style={[s.shortcutTitle, dark && { color: colors.onInk }]}>{title}</Text>
+      <Text style={[styles.small, dark && { color: colors.onInkMuted }]}>{hint}</Text>
+    </Pressable>
+  );
+}
+
 const s = StyleSheet.create({
+  shortcuts: { flexDirection: 'row', gap: 10 },
+  shortcut: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    padding: space.lg,
+    gap: 6,
+  },
+  shortcutDark: { backgroundColor: colors.ink, borderColor: colors.ink },
+  shortcutTitle: { fontFamily: fonts.display, fontSize: 16, color: colors.ink },
   card: {
     backgroundColor: colors.card,
     borderWidth: 1,

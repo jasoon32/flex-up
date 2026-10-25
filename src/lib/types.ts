@@ -1,6 +1,9 @@
 /** 0 = Sunday … 6 = Saturday (matches Date.getDay()). */
 export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
+/** Warm-up sets are logged but don't count toward volume or records; drop and failure sets are tags. */
+export type SetType = 'normal' | 'warmup' | 'drop' | 'failure';
+
 /** How an exercise's weight is entered. 'bw' = bodyweight: blank is bodyweight, a number is added kg. */
 export type WeightUnit = 'kg' | 'lb' | 'bw';
 
@@ -67,9 +70,10 @@ export interface SessionSet {
   /** Snapshot of the exercise's unit and per-hand setting when the set was logged. */
   weight_unit: WeightUnit;
   per_side: boolean;
+  set_type: SetType;
 }
 
-export type SetPatch = Partial<Pick<SessionSet, 'reps' | 'weight' | 'rpe' | 'completed' | 'weight_unit'>>;
+export type SetPatch = Partial<Pick<SessionSet, 'reps' | 'weight' | 'rpe' | 'completed' | 'weight_unit' | 'set_type'>>;
 
 export interface SessionWithSets extends WorkoutSession {
   sets: SessionSet[];

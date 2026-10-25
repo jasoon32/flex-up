@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { Alert } from '@/lib/alert';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +18,7 @@ import { colors, fonts, radius, space } from '@/theme';
 import { WEIGHT_UNITS } from '@/lib/units';
 import { exerciseDefaults, trName } from '@/data/names';
 import { checkUnfinished } from '@/lib/unfinished';
+import { planLink } from '@/lib/planLink';
 import type { DayOfWeek, DraftExercise, PlanExercise, PlanWithExercises, WeightUnit } from '@/lib/types';
 
 /** Editor row: numbers stay as text until save so half-typed values aren't fought. */
@@ -71,7 +73,7 @@ export default function PlanEditor() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
   const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState<'save' | 'start' | null>(null);
+  const [busy, setBusy] = useState<'save' | 'start' | 'copy' | null>(null);
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   /** Id of a new plan once its first save went through. */
   const savedId = useRef<string | null>(null);
@@ -197,6 +199,49 @@ export default function PlanEditor() {
     ]);
   };
 
+  /** Moves an exercise one place up or down; the new order is saved with the plan. */
+  const move = (index: number, by: -1 | 1) =>
+    setRows((rs) => {
+      const to = index + by;
+      if (to < 0 || to >= rs.length) return rs;
+      const next = [...rs];
+      [next[index], next[to]] = [next[to], next[index]];
+      return next;
+    });
+
+  /** Saves any edits, then makes a copy of the plan (not scheduled, so it doesn't double up on Home). */
+  const duplicate = async () => {
+    setBusy('copy');
+    try {
+      const exercises = validate();
+      if (!exercises) return;
+      const copyId = await savePlan(null, { name: t.planShare.copyName(name.trim()).slice(0, 60), days: [], exercises: exercises.map(({ id: _, ...e }) => e) });
+      Alert.alert(t.planShare.duplicated);
+      router.replace(`/plan/${copyId}`);
+    } catch (e) {
+      Alert.alert(t.editor.couldntSave, errorMessage(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /** A link with the whole plan in it; on the web it goes to the share sheet, or the clipboard. */
+  const share = async () => {
+    if (!plan) return;
+    const link = planLink({ ...plan, exercises: plan.exercises });
+    const text = t.planShare.shareText(trName(plan.name, 'plan'));
+    try {
+      if (Platform.OS !== 'web' || (typeof navigator !== 'undefined' && 'share' in navigator)) {
+        await Share.share({ message: `${text}\n${link}`, url: link });
+        return;
+      }
+      await Clipboard.setStringAsync(link);
+      Alert.alert(t.planShare.linkCopied, t.planShare.linkCopiedMsg);
+    } catch {
+      // Closing the share sheet isn't an error.
+    }
+  };
+
   const confirmDelete = () =>
     Alert.alert(t.editor.deletePlanQ, t.editor.deletePlanMsg, [
       { text: t.common.cancel, style: 'cancel' },
@@ -301,6 +346,26 @@ export default function PlanEditor() {
                     extraNames={rows.map((x) => x.name).filter((n) => n.trim() !== '')}
                     style={s.exName}
                   />
+                  <View style={s.moves}>
+                    <Pressable
+                      onPress={() => move(i, -1)}
+                      disabled={i === 0}
+                      accessibilityRole="button"
+                      accessibilityLabel={t.planShare.moveUp(i + 1)}
+                      style={[s.move, i === 0 && { opacity: 0.25 }]}
+                    >
+                      <Ionicons name="chevron-up" size={18} color={colors.ink} />
+                    </Pressable>
+                    <Pressable
+                      onPress={() => move(i, 1)}
+                      disabled={i === rows.length - 1}
+                      accessibilityRole="button"
+                      accessibilityLabel={t.planShare.moveDown(i + 1)}
+                      style={[s.move, i === rows.length - 1 && { opacity: 0.25 }]}
+                    >
+                      <Ionicons name="chevron-down" size={18} color={colors.ink} />
+                    </Pressable>
+                  </View>
                   <Pressable
                     onPress={() => setRows((rs) => rs.filter((x) => x.key !== r.key))}
                     accessibilityRole="button"
@@ -413,6 +478,29 @@ export default function PlanEditor() {
               />
             ) : null}
             {!isNew ? (
+              <View style={styles.row}>
+                <Button
+                  title={t.planShare.duplicate}
+                  variant="secondary"
+                  small
+                  icon={<Ionicons name="copy-outline" size={16} color={colors.ink} />}
+                  onPress={duplicate}
+                  loading={busy === 'copy'}
+                  disabled={busy !== null}
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  title={t.planShare.share}
+                  variant="secondary"
+                  small
+                  icon={<Ionicons name="share-outline" size={16} color={colors.ink} />}
+                  onPress={share}
+                  disabled={busy !== null || !plan}
+                  style={{ flex: 1 }}
+                />
+              </View>
+            ) : null}
+            {!isNew ? (
               <Button title={t.editor.deletePlan} variant="danger" onPress={confirmDelete} disabled={busy !== null} />
             ) : null}
           </View>
@@ -461,7 +549,9 @@ const s = StyleSheet.create({
     fontSize: 16,
     color: colors.ink,
   },
-  trash: { width: 44, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  trash: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  moves: { flexDirection: 'row' },
+  move: { width: 32, height: 40, alignItems: 'center', justifyContent: 'center' },
   targets: { flexDirection: 'row', gap: 6, paddingLeft: 36 },
   target: {
     flex: 1,

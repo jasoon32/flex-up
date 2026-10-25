@@ -2,6 +2,10 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useFocusData } from '@/hooks/useAsync';
+import { loadLevel } from '@/data/progress';
+import { isUnlocked, UNLOCK_LEVEL } from '@/lib/levels';
 import { Alert } from '@/lib/alert';
 import { errorMessage } from '@/lib/errors';
 import { validateName } from '@/lib/validation';
@@ -35,6 +39,9 @@ export default function Character() {
   const [slot, setSlot] = useState<Slot>('top');
   const [nameError, setNameError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const { data: level } = useFocusData(loadLevel);
+  /** Until the level has loaded, nothing shows as locked. */
+  const locked = (id: ItemId) => !!level && !isUnlocked(id, level.level, saved);
 
   // Pick up the saved look once the account loads or changes (e.g. saved on another device).
   const savedKey = JSON.stringify(saved);
@@ -53,6 +60,7 @@ export default function Character() {
   /** Tap to wear, tap again to take off. Tops and bottoms are always worn, so they only switch. */
   const toggle = (s: Slot, id: ItemId) => {
     const on = isOn(s, id);
+    if (!on && locked(id)) return Alert.alert(t.locks.lockedQ, t.locks.lockedMsg(UNLOCK_LEVEL[id], level!.level));
     if (s === 'gear') {
       const g = id as GearId;
       return set('gear', on ? draft.gear.filter((x) => x !== g) : [...draft.gear, g]);
@@ -103,7 +111,17 @@ export default function Character() {
     <SafeAreaView style={styles.screen} edges={['top']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={[styles.content, { gap: space.xl }]} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>{C.title}</Text>
+          <View style={styles.between}>
+            <Text style={styles.title}>{C.title}</Text>
+            <Pressable
+              onPress={() => router.push('/settings')}
+              accessibilityRole="button"
+              accessibilityLabel={t.tabs.settings}
+              style={s.gear}
+            >
+              <Ionicons name="settings-outline" size={20} color={colors.ink} />
+            </Pressable>
+          </View>
 
           <View style={s.stage}>
             <View style={s.floor} />
@@ -113,8 +131,16 @@ export default function Character() {
             <Text style={s.name} numberOfLines={1}>
               {draft.name.trim() || C.defaultName}
             </Text>
-            <Text style={styles.small}>{C.bodies[draft.body]}</Text>
+            <Text style={styles.small}>{level ? t.progress.level(level.level) : C.bodies[draft.body]}</Text>
           </View>
+          {level ? (
+            <View style={{ gap: 6 }}>
+              <View style={s.xpTrack}>
+                <View style={[s.xpFill, { width: `${Math.round((level.into / level.span) * 100)}%` }]} />
+              </View>
+              <Text style={styles.small}>{t.progress.xpHow}</Text>
+            </View>
+          ) : null}
 
           <TextField
             label={C.name}
@@ -162,18 +188,27 @@ export default function Character() {
             <View style={s.grid}>
               {section.items.map((id) => {
                 const on = isOn(slot, id);
+                const lock = !on && locked(id);
                 const name = C.items[id] + (isWomens(id) ? ` (${C.womens})` : '');
                 return (
                   <Pressable
                     key={id}
                     onPress={() => toggle(slot, id)}
                     accessibilityRole={slot === 'gear' || section.optional ? 'checkbox' : 'radio'}
-                    accessibilityState={{ checked: on }}
-                    accessibilityLabel={name}
+                    accessibilityState={{ checked: on, disabled: lock }}
+                    accessibilityLabel={lock ? `${name}, ${t.locks.level(UNLOCK_LEVEL[id])}` : name}
                     style={[s.item, on && s.itemOn]}
                   >
                     <View style={s.itemArt}>
-                      <PixelCharacter pixel={3} look={lookWith(draft, slot, id)} label={name} />
+                      <View style={lock ? { opacity: 0.3 } : undefined}>
+                        <PixelCharacter pixel={3} look={lookWith(draft, slot, id)} label={name} />
+                      </View>
+                      {lock ? (
+                        <View style={s.lock}>
+                          <Ionicons name="lock-closed" size={11} color={colors.lime} />
+                          <Text style={s.lockText}>{t.locks.level(UNLOCK_LEVEL[id])}</Text>
+                        </View>
+                      ) : null}
                       {on ? (
                         <View style={s.check}>
                           <Ionicons name="checkmark" size={12} color={colors.lime} />
@@ -270,4 +305,28 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   itemName: { fontSize: 12, lineHeight: 15, fontFamily: fonts.semibold, color: colors.ink },
+  gear: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  xpTrack: { height: 10, borderRadius: 5, backgroundColor: colors.border, overflow: 'hidden' },
+  xpFill: { height: '100%', borderRadius: 5, backgroundColor: colors.ink },
+  lock: {
+    position: 'absolute',
+    bottom: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 7,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.ink,
+  },
+  lockText: { fontSize: 11, fontFamily: fonts.bold, color: colors.lime },
 });
