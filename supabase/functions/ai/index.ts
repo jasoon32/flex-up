@@ -1,7 +1,7 @@
 // Flex Up Pro — AI coach. One Supabase Edge Function for every AI feature, so the Gemini key
 // stays on the server and every request counts toward the person's daily cap.
 //
-// Deploy:   npx supabase functions deploy ai
+// Deploy:   npx supabase functions deploy ai --no-verify-jwt   (it checks the user itself)
 // Secret:   npx supabase secrets set GEMINI_API_KEY=...   (from https://aistudio.google.com/apikey)
 // Optional: GEMINI_MODEL (model id to try first), AI_DAILY_LIMIT (default 20)
 //
@@ -88,7 +88,7 @@ const TASKS: Record<Kind, { prompt: string; schema: Record<string, unknown> }> =
 /** Strips emoji and stray markdown in case the model ignores the rules. */
 const clean = (s: unknown, max = 400) =>
   String(s ?? '')
-    .replace(/\p{Extended_Pictographic}|️|‍/gu, '')
+    .replace(/\p{Extended_Pictographic}|\uFE0F|\u200D/gu, '')
     .replace(/[*_#`]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
