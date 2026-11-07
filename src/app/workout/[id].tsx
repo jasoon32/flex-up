@@ -25,6 +25,7 @@ import {
   finishSession,
   formatSet,
   getLastSets,
+  getLoggedExercises,
   getSession,
   groupSets,
   reopenSession,
@@ -46,6 +47,7 @@ import { useRestTimer } from '@/providers/RestTimerProvider';
 import { Button, ErrorBanner, Loading, styles } from '@/components/ui';
 import { SetHeader, SetRow } from '@/components/SetRow';
 import { ExerciseNameInput } from '@/components/ExerciseNameInput';
+import { NewTag } from '@/components/NewTag';
 import { colors, fonts, radius, space, WEIGHT_UNIT } from '@/theme';
 import type { ExerciseGroup, SessionSet, SessionWithSets, SetPatch } from '@/lib/types';
 import { trName } from '@/data/names';
@@ -67,6 +69,8 @@ interface Context {
   ranges: Map<string, { min: number; max: number }>;
   /** Sticky notes per exercise name ("seat on 4"). */
   notes: Map<string, string>;
+  /** Exercises with no completed set in any earlier workout; shown with NEW. */
+  fresh: Set<string>;
 }
 
 const emptyContext = (): Context => ({
@@ -76,6 +80,7 @@ const emptyContext = (): Context => ({
   bests: new Map(),
   ranges: new Map(),
   notes: new Map(),
+  fresh: new Set(),
 });
 
 /** Plate colours by size, heaviest first, as most gyms paint them. */
@@ -83,17 +88,20 @@ const PLATE_COLORS = ['#D64545', '#2F6FD6', '#E8B931', '#3E9B4F', '#FFFFFF', '#3
 
 async function loadContext(session: SessionWithSets): Promise<Context> {
   const names = [...new Set(session.sets.map((s) => s.exercise_name))];
-  const [last, plan, bests, notes] = await Promise.all([
+  const [last, plan, bests, notes, logged] = await Promise.all([
     getLastSets(names, session.started_at).catch(() => new Map<string, SessionSet[]>()),
     session.plan_id ? getPlan(session.plan_id).catch(() => null) : Promise.resolve(null),
     getBestsBefore(names, session.started_at).catch(() => new Map<string, Best>()),
     getExerciseNotes(names).catch(() => new Map<string, string>()),
+    getLoggedExercises(names, session.started_at).catch(() => null),
   ]);
   const exercises = plan?.exercises ?? [];
   const targets = new Map(exercises.map((e) => [e.name, formatTarget(e)]));
   const rests = new Map(exercises.map((e) => [e.name, e.rest_seconds]));
   const ranges = new Map(exercises.map((e) => [e.name, { min: e.target_reps, max: e.target_reps_max ?? e.target_reps }]));
-  return { last, targets, rests, bests, ranges, notes };
+  // Without the history, nothing is marked new rather than everything.
+  const fresh = new Set(logged ? names.filter((n) => !logged.has(n)) : []);
+  return { last, targets, rests, bests, ranges, notes, fresh };
 }
 
 /** Loads a session; an unfinished one first picks up any edits made to its plan since it started. */
@@ -376,8 +384,8 @@ export default function WorkoutScreen() {
       const created = await addSessionExercise(id, name, order);
       replaceSets((sets) => [...sets, created]);
       setNewExercise(null);
-      // Last time, records and notes were loaded for the exercises the workout started with;
-      // fetch them for the new one too, so its "Last" column and suggestion work.
+      // Last time, records, notes and NEW were loaded for the exercises the workout started with;
+      // fetch them for the new one too, so its "Last" column, suggestion and NEW label work.
       if (session) {
         const fresh = await loadContext({ ...session, sets: [...session.sets, created] }).catch(() => null);
         if (fresh) setCtx(fresh);
@@ -574,6 +582,7 @@ export default function WorkoutScreen() {
                     <Text style={s.collapsedTitle} numberOfLines={1}>
                       {trName(g.name)}
                       {badge}
+                      {ctx.fresh.has(g.name) ? <NewTag /> : null}
                     </Text>
                     <Text style={styles.small} numberOfLines={1}>
                       {g.sets.map((x) => formatSet({ ...x, rpe: null })).join(' · ')}
@@ -603,6 +612,7 @@ export default function WorkoutScreen() {
                   <Text style={s.exTitle}>
                     {trName(g.name)}
                     {badge}
+                    {ctx.fresh.has(g.name) ? <NewTag /> : null}
                   </Text>
                   {collapsible ? (
                     <Ionicons name="chevron-up" size={18} color={colors.muted} />

@@ -105,6 +105,8 @@ export const zh: Strings = {
     addOneFirst: '请先添加至少一个动作。',
   },
   workout: {
+    newExercise: '新',
+    newExerciseLabel: '第一次',
     close: '关闭训练',
     startedAt: (time) => `开始于 ${time}`,
     doneIn: (duration) => `完成 · ${duration}`,

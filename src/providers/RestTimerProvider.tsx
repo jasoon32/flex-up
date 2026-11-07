@@ -3,10 +3,11 @@ import { Pressable, StyleSheet, Text, Vibration, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePathname } from 'expo-router';
 import { TAB_ROUTES } from '@/lib/tabs';
-import { useAudioPlayer } from 'expo-audio';
 import { Ionicons } from '@expo/vector-icons';
 import { useI18n } from '@/i18n';
 import { formatRest, REST_MAX } from '@/lib/validation';
+import { playRestSound, primeRestSound } from '@/lib/restSound';
+import { keepScreenOn } from '@/lib/wakeLock';
 import { colors, fonts, radius } from '@/theme';
 
 interface Rest {
@@ -30,13 +31,16 @@ const OVER_SHOWN_MS = 4000;
 
 /**
  * One rest timer for the whole app, so it keeps counting when you leave the workout screen.
- * Alerts (vibration and a short sound) only happen while the app is open.
+ * Alerts (vibration and a short sound) only happen while the app is open, so the screen
+ * is kept on during a rest.
  */
 export function RestTimerProvider({ children }: { children: ReactNode }) {
   const [rest, setRest] = useState<Rest | null>(null);
   const [over, setOver] = useState(false);
 
   const start = useCallback((seconds: number, label: string) => {
+    // Called from a tap, which is when Safari lets a page unlock sound for later.
+    primeRestSound();
     setOver(false);
     setRest({ endsAt: Date.now() + seconds * 1000, total: seconds, label });
   }, []);
@@ -46,6 +50,13 @@ export function RestTimerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(() => ({ start, stop }), [start, stop]);
+
+  const resting = rest !== null;
+  useEffect(() => {
+    if (!resting) return;
+    keepScreenOn(true);
+    return () => keepScreenOn(false);
+  }, [resting]);
 
   return (
     <RestTimerContext.Provider value={value}>
@@ -78,7 +89,6 @@ function RestBar({
   const R = t.rest;
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
-  const player = useAudioPlayer(require('../../assets/rest-done.wav'));
   const [now, setNow] = useState(() => Date.now());
   const alerted = useRef<number | null>(null);
 
@@ -98,12 +108,11 @@ function RestBar({
     setOver(true);
     Vibration.vibrate([0, 300, 150, 300]);
     try {
-      player.seekTo(0);
-      player.play();
+      playRestSound();
     } catch {
       // Sound is a bonus; the vibration and banner still signal the end.
     }
-  }, [rest, remainingMs, player, setRest, setOver]);
+  }, [rest, remainingMs, setRest, setOver]);
 
   useEffect(() => {
     if (!over) return;
