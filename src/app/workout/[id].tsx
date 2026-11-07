@@ -14,6 +14,7 @@ import {
   finishSession,
   formatSet,
   getLastSets,
+  getLoggedExercises,
   getSession,
   groupSets,
   reopenSession,
@@ -54,17 +55,18 @@ interface Context {
 
 async function loadContext(session: SessionWithSets): Promise<Context> {
   const names = [...new Set(session.sets.map((s) => s.exercise_name))];
-  const [last, plan, bests] = await Promise.all([
+  const [last, plan, bests, logged] = await Promise.all([
     getLastSets(names, session.started_at).catch(() => new Map<string, SessionSet[]>()),
     session.plan_id ? getPlan(session.plan_id).catch(() => null) : Promise.resolve(null),
-    getBestsBefore(names, session.started_at).catch(() => null),
+    getBestsBefore(names, session.started_at).catch(() => new Map<string, Best>()),
+    getLoggedExercises(names, session.started_at).catch(() => null),
   ]);
   const exercises = plan?.exercises ?? [];
   const targets = new Map(exercises.map((e) => [e.name, formatTarget(e)]));
   const rests = new Map(exercises.map((e) => [e.name, e.rest_seconds]));
   // Without the history, nothing is marked new rather than everything.
-  const fresh = new Set(bests ? names.filter((n) => !bests.has(n)) : []);
-  return { last, targets, rests, bests: bests ?? new Map(), fresh };
+  const fresh = new Set(logged ? names.filter((n) => !logged.has(n)) : []);
+  return { last, targets, rests, bests, fresh };
 }
 
 /** Loads a session; an unfinished one first picks up any edits made to its plan since it started. */
@@ -263,6 +265,9 @@ export default function WorkoutScreen() {
       const created = await addSessionExercise(id, name, order);
       replaceSets((sets) => [...sets, created]);
       setNewExercise(null);
+      const logged = await getLoggedExercises([created.exercise_name], session?.started_at).catch(() => null);
+      if (logged && !logged.has(created.exercise_name))
+        setCtx((c) => ({ ...c, fresh: new Set(c.fresh).add(created.exercise_name) }));
     } catch (e) {
       Alert.alert(W.couldntAddExercise, errorMessage(e));
     }

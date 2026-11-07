@@ -1,20 +1,31 @@
 /** Keeps the screen on while held, so the rest-over ding isn't missed to auto-lock. */
-interface Sentinel {
+interface Sentinel extends EventTarget {
   released: boolean;
   release: () => Promise<void>;
 }
 
 let sentinel: Sentinel | null = null;
 let wanted = false;
+let requesting = false;
 
 async function acquire() {
   const wl = (navigator as { wakeLock?: { request: (type: 'screen') => Promise<Sentinel> } }).wakeLock;
-  if (!wl || !wanted || (sentinel && !sentinel.released) || document.visibilityState !== 'visible') return;
+  if (!wl || !wanted || requesting || (sentinel && !sentinel.released) || document.visibilityState !== 'visible')
+    return;
+  requesting = true;
   try {
-    sentinel = await wl.request('screen');
-    if (!wanted) release();
+    const s = await wl.request('screen');
+    if (!wanted) {
+      s.release().catch(() => {});
+      return;
+    }
+    sentinel = s;
+    // The browser can drop the lock while the page is showing (low battery); take it back.
+    s.addEventListener('release', () => void acquire(), { once: true });
   } catch {
     // Not allowed right now (low battery mode, hidden tab); the timer still works.
+  } finally {
+    requesting = false;
   }
 }
 

@@ -31,7 +31,10 @@ export function primeRestSound(): void {
     if (!buffer && !loading) {
       loading = true;
       fetch(SOUND_URL)
-        .then((r) => r.arrayBuffer())
+        .then((r) => {
+          if (!r.ok) throw new Error(`rest sound: HTTP ${r.status}`);
+          return r.arrayBuffer();
+        })
         .then((data) => ctx!.decodeAudioData(data))
         .then((b) => (buffer = b))
         .catch(() => {})
