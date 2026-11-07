@@ -14,6 +14,7 @@ import {
   finishSession,
   formatSet,
   getLastSets,
+  getLoggedExercises,
   getSession,
   groupSets,
   reopenSession,
@@ -34,6 +35,7 @@ import { useRestTimer } from '@/providers/RestTimerProvider';
 import { Button, ErrorBanner, Loading, styles } from '@/components/ui';
 import { SetHeader, SetRow } from '@/components/SetRow';
 import { ExerciseNameInput } from '@/components/ExerciseNameInput';
+import { NewTag } from '@/components/NewTag';
 import { colors, fonts, radius, space, WEIGHT_UNIT } from '@/theme';
 import type { ExerciseGroup, SessionSet, SessionWithSets, SetPatch } from '@/lib/types';
 import { trName } from '@/data/names';
@@ -47,19 +49,24 @@ interface Context {
   rests: Map<string, number | null>;
   /** Bests from earlier workouts, for 🏆 / 🔥 as sets are ticked. */
   bests: Map<string, Best>;
+  /** Exercises with no completed set in any earlier workout; shown with NEW. */
+  fresh: Set<string>;
 }
 
 async function loadContext(session: SessionWithSets): Promise<Context> {
   const names = [...new Set(session.sets.map((s) => s.exercise_name))];
-  const [last, plan, bests] = await Promise.all([
+  const [last, plan, bests, logged] = await Promise.all([
     getLastSets(names, session.started_at).catch(() => new Map<string, SessionSet[]>()),
     session.plan_id ? getPlan(session.plan_id).catch(() => null) : Promise.resolve(null),
     getBestsBefore(names, session.started_at).catch(() => new Map<string, Best>()),
+    getLoggedExercises(names, session.started_at).catch(() => null),
   ]);
   const exercises = plan?.exercises ?? [];
   const targets = new Map(exercises.map((e) => [e.name, formatTarget(e)]));
   const rests = new Map(exercises.map((e) => [e.name, e.rest_seconds]));
-  return { last, targets, rests, bests };
+  // Without the history, nothing is marked new rather than everything.
+  const fresh = new Set(logged ? names.filter((n) => !logged.has(n)) : []);
+  return { last, targets, rests, bests, fresh };
 }
 
 /** Loads a session; an unfinished one first picks up any edits made to its plan since it started. */
@@ -77,7 +84,13 @@ export default function WorkoutScreen() {
   const W = tr.workout;
   const { id } = useLocalSearchParams<{ id: string }>();
   const [session, setSession] = useState<SessionWithSets | null>(null);
-  const [ctx, setCtx] = useState<Context>({ last: new Map(), targets: new Map(), rests: new Map(), bests: new Map() });
+  const [ctx, setCtx] = useState<Context>({
+    last: new Map(),
+    targets: new Map(),
+    rests: new Map(),
+    bests: new Map(),
+    fresh: new Set(),
+  });
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [groupErrors, setGroupErrors] = useState<Record<number, string>>({});
@@ -252,6 +265,9 @@ export default function WorkoutScreen() {
       const created = await addSessionExercise(id, name, order);
       replaceSets((sets) => [...sets, created]);
       setNewExercise(null);
+      const logged = await getLoggedExercises([created.exercise_name], session?.started_at).catch(() => null);
+      if (logged && !logged.has(created.exercise_name))
+        setCtx((c) => ({ ...c, fresh: new Set(c.fresh).add(created.exercise_name) }));
     } catch (e) {
       Alert.alert(W.couldntAddExercise, errorMessage(e));
     }
@@ -423,6 +439,7 @@ export default function WorkoutScreen() {
                     <Text style={s.collapsedTitle} numberOfLines={1}>
                       {trName(g.name)}
                       {badge}
+                      {ctx.fresh.has(g.name) ? <NewTag /> : null}
                     </Text>
                     <Text style={styles.small} numberOfLines={1}>
                       {g.sets.map((x) => formatSet({ ...x, rpe: null })).join(' · ')}
@@ -452,6 +469,7 @@ export default function WorkoutScreen() {
                   <Text style={s.exTitle}>
                     {trName(g.name)}
                     {badge}
+                    {ctx.fresh.has(g.name) ? <NewTag /> : null}
                   </Text>
                   {collapsible ? (
                     <Ionicons name="chevron-up" size={18} color={colors.muted} />

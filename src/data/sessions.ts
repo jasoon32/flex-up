@@ -428,6 +428,33 @@ export async function deleteSession(id: string): Promise<void> {
   dropSnapshot(id);
 }
 
+/**
+ * Of `names`, the exercises with at least one completed set in a finished workout
+ * (started before `before`, if given).
+ */
+export async function getLoggedExercises(names: string[], before?: string): Promise<Set<string>> {
+  const logged = new Set<string>();
+  let left = names;
+  // A response is capped (1,000 rows by default), so ask again for the names not seen yet
+  // until a response comes back short of the cap.
+  while (left.length > 0) {
+    let q = supabase
+      .from('session_sets')
+      .select('exercise_name, workout_sessions!inner(completed_at)')
+      .in('exercise_name', left)
+      .eq('completed', true)
+      .not('workout_sessions.completed_at', 'is', null)
+      .limit(LOGGED_PAGE);
+    if (before) q = q.lt('workout_sessions.started_at', before);
+    const rows = must(await q) as { exercise_name: string }[];
+    rows.forEach((r) => logged.add(r.exercise_name));
+    if (rows.length < LOGGED_PAGE) break;
+    left = left.filter((n) => !logged.has(n));
+  }
+  return logged;
+}
+const LOGGED_PAGE = 1000;
+
 /** Sessions started on or after `since` (newest first). */
 export async function listSessionsSince(since: Date): Promise<WorkoutSession[]> {
   const rows = must(

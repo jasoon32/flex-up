@@ -8,6 +8,7 @@ import { formatTarget, listPlans } from '@/data/plans';
 import {
   deleteSession,
   getActiveSession,
+  getLoggedExercises,
   getSession,
   listSessionsSince,
   restoreSession,
@@ -21,6 +22,7 @@ import { errorMessage } from '@/lib/errors';
 import { readLook } from '@/lib/character';
 import { useAuth } from '@/providers/AuthProvider';
 import { Badge, Button, Card, ErrorBanner, Eyebrow, Loading, styles } from '@/components/ui';
+import { NewTag } from '@/components/NewTag';
 import { PixelCharacter } from '@/components/PixelCharacter';
 import { colors, fonts, radius, space } from '@/theme';
 import type { DayOfWeek, PlanWithExercises, WorkoutSession } from '@/lib/types';
@@ -31,6 +33,8 @@ interface HomeData {
   plans: PlanWithExercises[];
   week: WorkoutSession[];
   active: WorkoutSession | null;
+  /** Exercises in the plans that have been logged before; the rest show NEW. Null if unknown. */
+  logged: Set<string> | null;
 }
 
 export default function Home() {
@@ -45,7 +49,9 @@ export default function Home() {
       listSessionsSince(startOfWeek()),
       getActiveSession(),
     ]);
-    return { plans, week, active };
+    const names = [...new Set(plans.flatMap((p) => p.exercises.map((e) => e.name)))];
+    const logged = await getLoggedExercises(names).catch(() => null);
+    return { plans, week, active, logged };
   });
 
   const dow = today();
@@ -233,7 +239,10 @@ export default function Home() {
                       <View>
                         {plan.exercises.map((ex, i) => (
                           <View key={ex.id} style={[s.exRow, i < plan.exercises.length - 1 && s.exDivider]}>
-                            <Text style={[styles.textMedium, { flex: 1 }]}>{trName(ex.name)}</Text>
+                            <Text style={[styles.textMedium, { flex: 1 }]}>
+                              {trName(ex.name)}
+                              {data!.logged && !data!.logged.has(ex.name) ? <NewTag /> : null}
+                            </Text>
                             <Text style={[styles.text, { color: colors.muted }]}>{formatTarget(ex)}</Text>
                           </View>
                         ))}

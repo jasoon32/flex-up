@@ -108,6 +108,8 @@ export const en = {
     addOneFirst: 'Add at least one exercise first.',
   },
   workout: {
+    newExercise: 'NEW',
+    newExerciseLabel: 'First time',
     close: 'Close workout',
     startedAt: (time: string) => `Started ${time}`,
     doneIn: (duration: string) => `Done · ${duration}`,
