@@ -25,6 +25,7 @@ import type { LevelInfo } from '@/lib/levels';
 import { useAuth } from '@/providers/AuthProvider';
 import { Badge, Button, Card, ErrorBanner, Eyebrow, Loading, ProTag, styles } from '@/components/ui';
 import { NewTag } from '@/components/NewTag';
+import { WeeklyReportCard } from '@/components/WeeklyReportCard';
 import { PixelCharacter } from '@/components/PixelCharacter';
 import { colors, fonts, radius, space } from '@/theme';
 import type { DayOfWeek, PlanWithExercises, WorkoutSession } from '@/lib/types';
@@ -132,6 +133,8 @@ export default function Home() {
         </View>
 
         {error ? <ErrorBanner message={error} onRetry={reload} /> : null}
+
+        <WeeklyReportCard />
 
         <Pressable
           onPress={() => router.push('/character')}

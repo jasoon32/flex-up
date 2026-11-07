@@ -20,6 +20,8 @@ import { PixelCharacter } from '@/components/PixelCharacter';
 import { MonthCalendar } from '@/components/MonthCalendar';
 import { BodyWeightCard } from '@/components/BodyWeightCard';
 import { FriendsCard } from '@/components/FriendsCard';
+import { PlateauCard } from '@/components/PlateauCard';
+import { findPlateaus } from '@/data/coach';
 import { colors, fonts, radius, space } from '@/theme';
 
 const SHOWN_EXERCISES = 6;
@@ -67,6 +69,7 @@ export default function ProgressTab() {
                   </View>
                 </View>
 
+                <PlateauCard plateaus={findPlateaus(p.exercises)} />
                 <WeeklyBars progress={p} />
                 <MuscleBars progress={p} />
 

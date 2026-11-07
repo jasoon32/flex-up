@@ -47,6 +47,7 @@ import { useRestTimer } from '@/providers/RestTimerProvider';
 import { Button, ErrorBanner, Loading, styles } from '@/components/ui';
 import { SetHeader, SetRow } from '@/components/SetRow';
 import { ExerciseNameInput } from '@/components/ExerciseNameInput';
+import { findSwaps, swapSessionExercise } from '@/data/coach';
 import { NewTag } from '@/components/NewTag';
 import { colors, fonts, radius, space, WEIGHT_UNIT } from '@/theme';
 import type { ExerciseGroup, SessionSet, SessionWithSets, SetPatch } from '@/lib/types';
@@ -136,6 +137,8 @@ export default function WorkoutScreen() {
   /** The workout note as typed; saved when the box loses focus. */
   const [workoutNote, setWorkoutNote] = useState<string | null>(null);
   const [savingPlan, setSavingPlan] = useState(false);
+  /** The exercise whose swaps the coach is finding. */
+  const [swapping, setSwapping] = useState<number | null>(null);
   const { showRpe, defaultRest, weightStep, weightStepLb } = usePrefs();
   const TL = tr.tools;
   const restTimer = useRestTimer();
@@ -305,6 +308,36 @@ export default function WorkoutScreen() {
       replaceSets((sets) => [...sets.filter((x) => !ids.has(x.id)), ...updated]);
     } catch (e) {
       Alert.alert(W.couldntAddSet, errorMessage(e));
+    }
+  };
+
+  /** Machine busy: the coach offers three exercises for the same muscles, and one replaces this one. */
+  const openSwap = async (group: ExerciseGroup) => {
+    if (swapping !== null) return;
+    setSwapping(group.order);
+    const { options } = await findSwaps(
+      group.name,
+      groups.map((x) => x.name),
+    ).catch(() => ({ options: [] }));
+    setSwapping(null);
+    if (options.length === 0) return Alert.alert(tr.ai.swapTitle(trName(group.name)), tr.ai.swapNone);
+    Alert.alert(tr.ai.swapTitle(trName(group.name)), tr.ai.swapMsg, [
+      ...options.map((o) => ({
+        text: o.why ? `${trName(o.name)} · ${o.why}` : trName(o.name),
+        onPress: () => doSwap(group, o.name),
+      })),
+      { text: tr.common.cancel, style: 'cancel' as const },
+    ]);
+  };
+
+  const doSwap = async (group: ExerciseGroup, name: string) => {
+    try {
+      await swapSessionExercise(id, group, name);
+      const fresh = await getSession(id);
+      setSession(fresh);
+      setCtx(await loadContext(fresh));
+    } catch (e) {
+      Alert.alert(tr.ai.couldntSwap, errorMessage(e));
     }
   };
 
@@ -713,6 +746,15 @@ export default function WorkoutScreen() {
                       a11y={TL.platesLabel(trName(g.name))}
                       on={platesOpen}
                       onPress={() => setTool(platesOpen ? null : { order: g.order, kind: 'plates' })}
+                    />
+                  ) : null}
+                  {inProgress ? (
+                    <ToolChip
+                      icon="swap-horizontal-outline"
+                      label={swapping === g.order ? tr.ai.thinking : tr.ai.swap}
+                      a11y={tr.ai.swapLabel(trName(g.name))}
+                      on={swapping === g.order}
+                      onPress={() => openSwap(g)}
                     />
                   ) : null}
                   <ToolChip icon="create-outline" label={TL.note} a11y={TL.noteLabel(trName(g.name))} on={noteOpen} onPress={() => openNote(g)} />

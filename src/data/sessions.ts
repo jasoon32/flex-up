@@ -42,6 +42,7 @@ function mapSession(row: any): WorkoutSession {
     started_at: row.started_at,
     completed_at: row.completed_at ?? null,
     notes: row.notes ?? null,
+    ai_recap: row.ai_recap ?? null,
   };
 }
 

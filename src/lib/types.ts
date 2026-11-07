@@ -55,6 +55,8 @@ export interface WorkoutSession {
   started_at: string;
   completed_at: string | null;
   notes: string | null;
+  /** The AI coach's note, written after Finish; null until then. */
+  ai_recap: string | null;
 }
 
 export interface SessionSet {
