@@ -428,6 +428,20 @@ export async function deleteSession(id: string): Promise<void> {
   dropSnapshot(id);
 }
 
+/** Of `names`, the exercises with at least one completed set in a finished workout. */
+export async function getLoggedExercises(names: string[]): Promise<Set<string>> {
+  if (names.length === 0) return new Set();
+  const rows = must(
+    await supabase
+      .from('session_sets')
+      .select('exercise_name, workout_sessions!inner(completed_at)')
+      .in('exercise_name', names)
+      .eq('completed', true)
+      .not('workout_sessions.completed_at', 'is', null),
+  ) as { exercise_name: string }[];
+  return new Set(rows.map((r) => r.exercise_name));
+}
+
 /** Sessions started on or after `since` (newest first). */
 export async function listSessionsSince(since: Date): Promise<WorkoutSession[]> {
   const rows = must(
