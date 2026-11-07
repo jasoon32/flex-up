@@ -27,6 +27,9 @@ import { AnimatedLifter, useRepFrame } from '@/components/AnimatedLifter';
 import { colors, fonts, radius, space } from '@/theme';
 import { toKg } from '@/lib/units';
 import { trName } from '@/data/names';
+import { getCoachRecap } from '@/data/coach';
+import { aiErrorText } from '@/lib/ai';
+import { CoachNote, type CoachState } from '@/components/CoachNote';
 
 function headline(t: Strings, m: Milestone | null, recap: WorkoutRecap) {
   const C = t.celebrate;
@@ -50,6 +53,8 @@ export default function Celebrate() {
   const [error, setError] = useState<string | null>(null);
   const [levels, setLevels] = useState<{ before: LevelInfo; after: LevelInfo } | null>(null);
   const frame = useRepFrame();
+  const [coach, setCoach] = useState<CoachState>({ kind: 'loading' });
+  const [coachTry, setCoachTry] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -69,6 +74,25 @@ export default function Celebrate() {
       active = false;
     };
   }, [id]);
+
+  // The coach's note comes after the recap and never holds up the celebration.
+  useEffect(() => {
+    if (!recap) return;
+    let active = true;
+    getCoachRecap(recap)
+      .then((text) => active && setCoach(text ? { kind: 'text', text } : { kind: 'error', message: t.ai.failed }))
+      .catch((e) => active && setCoach({ kind: 'error', message: aiErrorText(e) }));
+    return () => {
+      active = false;
+    };
+    // Asked once per recap (and again on Try again); the language is read when it is written.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recap, coachTry]);
+
+  const retryCoach = () => {
+    setCoach({ kind: 'loading' });
+    setCoachTry((n) => n + 1);
+  };
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
@@ -114,6 +138,8 @@ export default function Celebrate() {
             <Stat value={`${recap.completedSets}`} label={C.sets(recap.completedSets)} />
             <Stat value={`⚡${recap.streakDays}`} label={C.streakLabel} />
           </View>
+
+          <CoachNote dark state={coach} onRetry={retryCoach} />
 
           {levels ? <LevelBox before={levels.before} after={levels.after} look={look} /> : null}
 

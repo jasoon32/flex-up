@@ -10,6 +10,7 @@ import { formatDuration, startOfWeek } from '@/lib/days';
 import { Badge, Button, EmptyState, ErrorBanner, Loading, styles } from '@/components/ui';
 import { colors, fonts, radius, space } from '@/theme';
 import { trName } from '@/data/names';
+import { CoachNote } from '@/components/CoachNote';
 
 export default function History() {
   const { t } = useI18n();
@@ -92,6 +93,7 @@ export default function History() {
               </Pressable>
               {open ? (
                 <View style={s.body}>
+                  {item.ai_recap ? <CoachNote compact state={{ kind: 'text', text: item.ai_recap }} /> : null}
                   {item.exercises.length === 0 ? (
                     <Text style={styles.small}>{t.history.noCompletedSets}</Text>
                   ) : (

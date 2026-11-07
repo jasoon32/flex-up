@@ -8,6 +8,7 @@ import { formatTarget, listPlans } from '@/data/plans';
 import {
   deleteSession,
   getActiveSession,
+  getLoggedExercises,
   getSession,
   listSessionsSince,
   restoreSession,
@@ -23,6 +24,8 @@ import { loadLevel } from '@/data/progress';
 import type { LevelInfo } from '@/lib/levels';
 import { useAuth } from '@/providers/AuthProvider';
 import { Badge, Button, Card, ErrorBanner, Eyebrow, Loading, ProTag, styles } from '@/components/ui';
+import { NewTag } from '@/components/NewTag';
+import { WeeklyReportCard } from '@/components/WeeklyReportCard';
 import { PixelCharacter } from '@/components/PixelCharacter';
 import { colors, fonts, radius, space } from '@/theme';
 import type { DayOfWeek, PlanWithExercises, WorkoutSession } from '@/lib/types';
@@ -35,6 +38,8 @@ interface HomeData {
   week: WorkoutSession[];
   active: WorkoutSession | null;
   level: LevelInfo | null;
+  /** Exercises in the plans that have been logged before; the rest show NEW. Null if unknown. */
+  logged: Set<string> | null;
 }
 
 export default function Home() {
@@ -50,7 +55,9 @@ export default function Home() {
       getActiveSession(),
       loadLevel().catch(() => null),
     ]);
-    return { plans, week, active, level };
+    const names = [...new Set(plans.flatMap((p) => p.exercises.map((e) => e.name)))];
+    const logged = await getLoggedExercises(names).catch(() => null);
+    return { plans, week, active, level, logged };
   });
 
   const dow = today();
@@ -126,6 +133,8 @@ export default function Home() {
         </View>
 
         {error ? <ErrorBanner message={error} onRetry={reload} /> : null}
+
+        <WeeklyReportCard />
 
         <Pressable
           onPress={() => router.push('/character')}
@@ -263,7 +272,10 @@ export default function Home() {
                       <View>
                         {plan.exercises.map((ex, i) => (
                           <View key={ex.id} style={[s.exRow, i < plan.exercises.length - 1 && s.exDivider]}>
-                            <Text style={[styles.textMedium, { flex: 1 }]}>{trName(ex.name)}</Text>
+                            <Text style={[styles.textMedium, { flex: 1 }]}>
+                              {trName(ex.name)}
+                              {data!.logged && !data!.logged.has(ex.name) ? <NewTag /> : null}
+                            </Text>
                             <Text style={[styles.text, { color: colors.muted }]}>{formatTarget(ex)}</Text>
                           </View>
                         ))}
